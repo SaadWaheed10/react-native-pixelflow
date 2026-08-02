@@ -1,0 +1,78 @@
+{
+  "name": "react-native-pixelflow",
+  "version": "0.1.0",
+  "description": "One package for responsive React Native UI — responsive dimensions, typography, spacing, flex, fonts and theming, built directly on React Native's native StyleSheet API.",
+  "main": "./lib/commonjs/index.js",
+  "module": "./lib/module/index.js",
+  "types": "./lib/typescript/index.d.ts",
+  "react-native": "./src/index.ts",
+  "source": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/typescript/index.d.ts",
+      "react-native": "./src/index.ts",
+      "import": "./lib/module/index.js",
+      "require": "./lib/commonjs/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "lib",
+    "!**/__tests__",
+    "!**/*.test.*"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "prepare": "npm run build",
+    "clean": "rimraf lib"
+  },
+  "keywords": [
+    "react-native",
+    "responsive",
+    "responsive-ui",
+    "typography",
+    "scaling",
+    "stylesheet",
+    "tablet",
+    "foldable",
+    "fonts",
+    "google-fonts",
+    "theme"
+  ],
+  "author": "Saad Waheed Khan",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saadwaheed10/react-native-pixelflow"
+  },
+  "homepage": "https://github.com/saadwaheed10/react-native-pixelflow#readme",
+  "bugs": {
+    "url": "https://github.com/saadwaheed10/react-native-pixelflow/issues"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=17.0.0",
+    "react-native": ">=0.70.0"
+  },
+  "peerDependenciesMeta": {
+    "expo-font": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "react": "19.2.3",
+    "react-native": "0.86.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "rimraf": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
