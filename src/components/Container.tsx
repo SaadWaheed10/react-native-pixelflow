@@ -1,11 +1,6 @@
 import React from 'react';
-import {
-  SafeAreaView,
-  StyleSheet,
-  View,
-  type ViewProps,
-  type ViewStyle,
-} from 'react-native';
+import { StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { rp } from '../responsive/responsive';
 import { useTheme } from '../theme/ThemeProvider';
 
@@ -19,8 +14,8 @@ export interface ContainerProps extends ViewProps {
 }
 
 /**
- * Root screen wrapper: safe-area aware, theme-aware background, responsive
- * default padding.
+ * Root screen wrapper: safe-area aware (via `react-native-safe-area-context`),
+ * theme-aware background, responsive default padding.
  * @example <Container><YourScreenContent /></Container>
  */
 export function Container({

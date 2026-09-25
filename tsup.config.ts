@@ -8,7 +8,7 @@ export default defineConfig([
     dts: false,
     sourcemap: true,
     clean: true,
-    external: ['react', 'react-native', 'expo-font'],
+    external: ['react', 'react-native', 'expo-font', 'react-native-safe-area-context'],
   },
   {
     entry: ['src/index.ts'],
@@ -16,13 +16,13 @@ export default defineConfig([
     outDir: 'lib/module',
     dts: false,
     sourcemap: true,
-    external: ['react', 'react-native', 'expo-font'],
+    external: ['react', 'react-native', 'expo-font', 'react-native-safe-area-context'],
   },
   {
     entry: ['src/index.ts'],
     format: ['esm'],
     outDir: 'lib/typescript',
     dts: { only: true },
-    external: ['react', 'react-native', 'expo-font'],
+    external: ['react', 'react-native', 'expo-font', 'react-native-safe-area-context'],
   },
 ]);
