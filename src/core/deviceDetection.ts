@@ -17,9 +17,15 @@ export function getDeviceType(width: number, height: number): DeviceType {
   const diagonalPixels = Math.sqrt(adjustedWidth ** 2 + adjustedHeight ** 2);
   const diagonalInches = diagonalPixels / (pixelDensity * 160);
 
-  // Foldables (unfolded): wide, near-square-ish aspect ratio, large shortest edge.
+  // Foldables (unfolded): large shortest edge but not iPad-class, near-square
+  // aspect, mid phone–tablet diagonal. Classic iPads (shortest >= 700 or
+  // diagonal >= 8") fall through to tablet instead.
   const isFoldable =
-    shortestEdge >= 550 && aspectRatio < 1.6 && diagonalInches < 9;
+    shortestEdge >= 550 &&
+    shortestEdge < 700 &&
+    aspectRatio < 1.5 &&
+    diagonalInches >= 5.5 &&
+    diagonalInches < 8;
 
   if (isFoldable) return 'foldable';
 

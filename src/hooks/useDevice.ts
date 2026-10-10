@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
-import { scalingEngine } from '../core/scalingEngine';
-import type { DeviceType, Orientation } from '../types';
+import { useScalingSnapshot } from './useScaling';
 
 export interface UseDeviceResult {
-  deviceType: DeviceType;
-  orientation: Orientation;
+  deviceType: ReturnType<typeof useScalingSnapshot>['deviceType'];
+  orientation: ReturnType<typeof useScalingSnapshot>['orientation'];
   pixelDensity: number;
   os: typeof Platform.OS;
 }
@@ -15,12 +13,7 @@ export interface UseDeviceResult {
  * const { deviceType, orientation, pixelDensity } = useDevice();
  */
 export function useDevice(): UseDeviceResult {
-  const [snapshot, setSnapshot] = useState(() => scalingEngine.getSnapshot());
-
-  useEffect(() => {
-    const unsubscribe = scalingEngine.subscribe(setSnapshot);
-    return unsubscribe;
-  }, []);
+  const snapshot = useScalingSnapshot();
 
   return {
     deviceType: snapshot.deviceType,

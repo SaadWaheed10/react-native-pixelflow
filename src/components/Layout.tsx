@@ -2,6 +2,7 @@ import React from 'react';
 import { View, type ViewProps, type ViewStyle } from 'react-native';
 import { rp } from '../responsive/responsive';
 import { flex } from '../flex/flex';
+import { useScalingVersion } from '../hooks/useScaling';
 
 export interface RowProps extends ViewProps {
   gap?: number;
@@ -20,6 +21,8 @@ export function Row({
   children,
   ...rest
 }: RowProps): React.JSX.Element {
+  useScalingVersion();
+
   const rowStyle: ViewStyle = {
     ...flex.row,
     alignItems: align,
@@ -49,6 +52,8 @@ export function Column({
   children,
   ...rest
 }: ColumnProps): React.JSX.Element {
+  useScalingVersion();
+
   const columnStyle: ViewStyle = {
     ...flex.column,
     alignItems: align,
@@ -70,6 +75,7 @@ export interface SpacerProps {
 
 /** @example <Spacer size={20} /> or <Spacer size={20} axis="horizontal" /> */
 export function Spacer({ size, axis = 'both' }: SpacerProps): React.JSX.Element {
+  useScalingVersion();
   const scaled = rp(size);
   const style: ViewStyle = {
     ...(axis !== 'horizontal' && { height: scaled }),

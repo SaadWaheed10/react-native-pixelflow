@@ -5,21 +5,16 @@ import { fontFamilies, type FontFamilyName } from './fontRegistry';
  * Every entry resolves to a font-family string. See README for how to make
  * that string actually load a real typeface, in both Expo and bare RN.
  */
-export const fonts = fontFamilies as Record<
-  FontFamilyName,
-  Record<string, string>
->;
+export const fonts = fontFamilies;
 
 /**
- * Flattened `{ "Inter_400Regular": require(...) }`-shaped map is what
- * `expo-font`'s `useFonts` hook expects. We don't ship font binaries
- * (that would bloat every consumer's bundle even if they use 1 of 21
- * families), so this helper just documents/validates the expected shape —
- * consumers pass their own require() map for the families they actually use.
+ * Flattened `{ "Inter_400Regular": require(...) }`-shaped map for
+ * `expo-font`'s `useFonts`. Unknown weight keys are skipped with a
+ * `console.warn` so misconfigured maps fail loudly in development.
  *
  * @example
  * import { useFonts } from 'expo-font';
- * import { fonts, buildFontMap } from 'react-native-pixelflow';
+ * import { buildFontMap } from 'react-native-pixelflow';
  *
  * const [loaded] = useFonts(
  *   buildFontMap('inter', {
@@ -35,10 +30,22 @@ export function buildFontMap(
   const familyMap = fontFamilies[family];
   const result: Record<string, number | string> = {};
   for (const [weight, asset] of Object.entries(weightsToAssets)) {
-    const fontFamilyString = familyMap[weight as keyof typeof familyMap];
+    const fontFamilyString =
+      familyMap[weight as keyof typeof familyMap] as string | undefined;
     if (fontFamilyString) {
       result[fontFamilyString] = asset;
+    } else if (typeof __DEV__ !== 'undefined' ? __DEV__ : true) {
+      console.warn(
+        `[react-native-pixelflow] buildFontMap("${family}"): unknown weight "${weight}". ` +
+          `Available: ${Object.keys(familyMap).join(', ')}`,
+      );
     }
+  }
+  if (Object.keys(result).length === 0) {
+    console.warn(
+      `[react-native-pixelflow] buildFontMap("${family}"): no weights mapped. ` +
+        `Check that weight keys match the registry (e.g. "regular", "bold").`,
+    );
   }
   return result;
 }
@@ -47,3 +54,5 @@ export function buildFontMap(
 export const availableFontFamilies = Object.keys(
   fontFamilies,
 ) as FontFamilyName[];
+
+export type { FontFamilyName };

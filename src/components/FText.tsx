@@ -3,13 +3,16 @@ import { Text, type TextProps, type TextStyle } from 'react-native';
 import { rf, rl } from '../responsive/responsive';
 import { fonts } from '../fonts/fonts';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScalingVersion } from '../hooks/useScaling';
+import { getConfig } from '../core/config';
 import type { FontWeightKey } from '../types';
+import type { FontFamilyName } from '../fonts/fontRegistry';
 
 export interface FTextProps extends TextProps {
   /** Responsive font size. Default 15. */
   size?: number;
   /** Font family key from `fonts` (e.g. "inter", "poppins"). Default "inter". */
-  family?: keyof typeof fonts;
+  family?: FontFamilyName;
   /** Weight key resolved against the chosen family. Default "regular". */
   weight?: FontWeightKey;
   /** Explicit line height; defaults to size * 1.4, responsively scaled. */
@@ -22,7 +25,11 @@ export interface FTextProps extends TextProps {
 
 /**
  * Fully responsive Text — font size, family, and weight resolved
- * automatically.
+ * automatically. When PixelFlow applies accessibility font scale itself
+ * (`configure({ applyAccessibilityFontScale: true })`, the default),
+ * `allowFontScaling` defaults to false so React Native does not scale again.
+ * Pass `allowFontScaling` explicitly to override.
+ *
  * @example <FText size={16} family="inter" weight="semibold">Hello</FText>
  */
 export function FText({
@@ -32,13 +39,19 @@ export function FText({
   lineHeight,
   themed = true,
   secondary = false,
+  allowFontScaling,
   style,
   children,
   ...rest
 }: FTextProps): React.JSX.Element {
+  useScalingVersion();
   const theme = useTheme();
   const familyMap = fonts[family];
-  const fontFamily = familyMap[weight] ?? familyMap.regular;
+  const fontFamily = familyMap[weight] ?? familyMap.regular ?? fonts.inter.regular;
+
+  const applyA11y = getConfig().applyAccessibilityFontScale;
+  const resolvedAllowFontScaling =
+    allowFontScaling !== undefined ? allowFontScaling : !applyA11y;
 
   const textStyle: TextStyle = {
     fontSize: rf(size),
@@ -50,7 +63,11 @@ export function FText({
   };
 
   return (
-    <Text style={[textStyle, style]} {...rest}>
+    <Text
+      allowFontScaling={resolvedAllowFontScaling}
+      style={[textStyle, style]}
+      {...rest}
+    >
       {children}
     </Text>
   );

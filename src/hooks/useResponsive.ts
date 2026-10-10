@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react';
-import { scalingEngine } from '../core/scalingEngine';
-import type { ScalingSnapshot } from '../types';
+import { useCallback } from 'react';
+import { useScalingSnapshot } from './useScaling';
+import { selectForDevice } from '../responsive/responsive';
+import type { ResponsiveByDevice, ScalingSnapshot } from '../types';
 
 export interface UseResponsiveResult extends ScalingSnapshot {
-  scale: number;
+  /**
+   * Pick a value for the current device class.
+   * @example const columns = select({ phone: 1, tablet: 2, foldable: 2 });
+   */
+  select: <T>(values: ResponsiveByDevice<T>) => T;
 }
 
 /**
@@ -11,20 +16,19 @@ export interface UseResponsiveResult extends ScalingSnapshot {
  * classification. Backed by the same singleton engine that powers
  * rw/rh/rf/etc., so values are always consistent with your styles.
  * @example
- * const { width, height, isTablet, isLandscape } = useResponsive();
+ * const { width, height, isTablet, isLandscape, select, scale } = useResponsive();
  */
 export function useResponsive(): UseResponsiveResult {
-  const [snapshot, setSnapshot] = useState<ScalingSnapshot>(() =>
-    scalingEngine.getSnapshot(),
-  );
+  const snapshot = useScalingSnapshot();
 
-  useEffect(() => {
-    const unsubscribe = scalingEngine.subscribe(setSnapshot);
-    return unsubscribe;
-  }, []);
+  const select = useCallback(
+    <T,>(values: ResponsiveByDevice<T>): T =>
+      selectForDevice(snapshot.deviceType, values),
+    [snapshot.deviceType],
+  );
 
   return {
     ...snapshot,
-    scale: snapshot.width / 375,
+    select,
   };
 }

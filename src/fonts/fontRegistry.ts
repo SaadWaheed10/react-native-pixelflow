@@ -3,15 +3,42 @@ import type { FontFamilyMap } from '../types';
 /**
  * Family name -> weight -> font-family string.
  *
- * The strings follow the naming convention used by the `@expo-google-fonts/*`
- * packages (e.g. "Inter_400Regular"), which is also the convention most bare
- * React Native projects use when manually linking Google Fonts .ttf files
- * into `android/app/src/main/assets/fonts` and the iOS bundle. This means
- * `fonts.inter.bold` resolves to the correct family string regardless of
- * whether you load fonts via Expo or via manually-linked native font files —
- * see fontLoader.ts and the README for both setups.
+ * Strings follow `@expo-google-fonts/*` naming (e.g. "Inter_400Regular"),
+ * which matches typical bare RN linked `.ttf` filenames. PixelFlow does not
+ * bundle font binaries — load the faces you use via Expo or native assets.
+ *
+ * | Key | Expo package | Regular string |
+ * |---|---|---|
+ * | inter | `@expo-google-fonts/inter` | Inter_400Regular |
+ * | roboto | `@expo-google-fonts/roboto` | Roboto_400Regular |
+ * | poppins | `@expo-google-fonts/poppins` | Poppins_400Regular |
+ * | montserrat | `@expo-google-fonts/montserrat` | Montserrat_400Regular |
+ * | openSans | `@expo-google-fonts/open-sans` | OpenSans_400Regular |
+ * | lato | `@expo-google-fonts/lato` | Lato_400Regular |
+ * | nunito | `@expo-google-fonts/nunito` | Nunito_400Regular |
+ * | raleway | `@expo-google-fonts/raleway` | Raleway_400Regular |
+ * | outfit | `@expo-google-fonts/outfit` | Outfit_400Regular |
+ * | rubik | `@expo-google-fonts/rubik` | Rubik_400Regular |
+ * | workSans | `@expo-google-fonts/work-sans` | WorkSans_400Regular |
+ * | urbanist | `@expo-google-fonts/urbanist` | Urbanist_400Regular |
+ * | manrope | `@expo-google-fonts/manrope` | Manrope_400Regular |
+ * | dmSans | `@expo-google-fonts/dm-sans` | DMSans_400Regular |
+ * | plusJakartaSans | `@expo-google-fonts/plus-jakarta-sans` | PlusJakartaSans_400Regular |
+ * | mulish | `@expo-google-fonts/mulish` | Mulish_400Regular |
+ * | ubuntu | `@expo-google-fonts/ubuntu` | Ubuntu_400Regular |
+ * | quicksand | `@expo-google-fonts/quicksand` | Quicksand_400Regular |
+ * | merriweather | `@expo-google-fonts/merriweather` | Merriweather_400Regular |
+ * | playfairDisplay | `@expo-google-fonts/playfair-display` | PlayfairDisplay_400Regular |
+ * | notoSans | `@expo-google-fonts/noto-sans` | NotoSans_400Regular |
  */
-export const fontFamilies: Record<string, FontFamilyMap> = {
+/** Keep family keys for autocomplete; widen each map to FontFamilyMap for safe weight access. */
+function defineFontFamilies<T extends Record<string, FontFamilyMap>>(
+  map: T,
+): { [K in keyof T]: FontFamilyMap } {
+  return map;
+}
+
+export const fontFamilies = defineFontFamilies({
   inter: {
     thin: 'Inter_100Thin',
     extraLight: 'Inter_200ExtraLight',
@@ -184,6 +211,6 @@ export const fontFamilies: Record<string, FontFamilyMap> = {
     semibold: 'NotoSans_600SemiBold',
     bold: 'NotoSans_700Bold',
   },
-};
+});
 
 export type FontFamilyName = keyof typeof fontFamilies;

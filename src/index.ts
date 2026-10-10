@@ -1,8 +1,14 @@
+// Config
+export { configure } from './core/scalingEngine';
+export type { PixelFlowConfig, ResolvedPixelFlowConfig } from './core/config';
+export { DEFAULT_CONFIG, getConfig, resetConfig } from './core/config';
+
 // Responsive functions
-export { rw, rh, rf, rp, rm, rr, ri, rl, rls } from './responsive/responsive';
+export { rw, rh, rf, rp, rm, rr, ri, rl, rls, rs } from './responsive/responsive';
 
 // Flex utilities
 export { flex } from './flex/flex';
+export type { FlexKey } from './flex/flex';
 
 // Typography
 export { typography, createTypography } from './typography/typography';
@@ -13,8 +19,12 @@ export { fonts, buildFontMap, availableFontFamilies } from './fonts/fonts';
 export type { FontFamilyName } from './fonts/fontRegistry';
 
 // Theme
-export { lightTheme, darkTheme, customTheme } from './theme/themes';
-export { PixelFlowProvider, useTheme } from './theme/ThemeProvider';
+export { lightTheme, darkTheme, customTheme, defaultSpacing } from './theme/themes';
+export {
+  PixelFlowProvider,
+  useTheme,
+  useThemeSpacing,
+} from './theme/ThemeProvider';
 export type { PixelFlowProviderProps } from './theme/ThemeProvider';
 
 // Components
@@ -33,6 +43,8 @@ export type { UseResponsiveResult } from './hooks/useResponsive';
 export { useTypography } from './hooks/useTypography';
 export { useDevice } from './hooks/useDevice';
 export type { UseDeviceResult } from './hooks/useDevice';
+export { useScaledStyles } from './hooks/useScaledStyles';
+export { useScalingSnapshot, useScalingVersion } from './hooks/useScaling';
 
 // Core (advanced usage / testing)
 export { scalingEngine } from './core/scalingEngine';
@@ -46,5 +58,7 @@ export type {
   FontWeightKey,
   FontFamilyMap,
   ThemeColors,
+  ThemeSpacing,
   PixelFlowTheme,
+  ResponsiveByDevice,
 } from './types';

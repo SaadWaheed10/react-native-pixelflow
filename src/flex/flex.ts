@@ -7,7 +7,7 @@ import type { ViewStyle } from 'react-native';
  *   wrapper: { ...flex.center, ...flex.row },
  * });
  */
-export const flex: Record<string, ViewStyle> = {
+export const flex = {
   center: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -47,4 +47,6 @@ export const flex: Record<string, ViewStyle> = {
   fill: {
     flex: 1,
   },
-};
+} as const satisfies Record<string, ViewStyle>;
+
+export type FlexKey = keyof typeof flex;

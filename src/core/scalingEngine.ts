@@ -1,24 +1,14 @@
 import { Dimensions, PixelRatio } from 'react-native';
 import { getDeviceType, getOrientation } from './deviceDetection';
+import {
+  getConfig,
+  setConfig,
+  type PixelFlowConfig,
+  type ResolvedPixelFlowConfig,
+} from './config';
 import type { DeviceType, Orientation, ScalingSnapshot } from '../types';
 
-/**
- * Baseline design reference. Chosen to match a common mid-size phone
- * viewport (iPhone 11 / Pixel-class device) that most design tools default
- * to, so `rf(16)` "looks like" 16px on the device the designer had in mind.
- */
-const BASE_WIDTH = 375;
-const BASE_HEIGHT = 812;
-
-/** Guard rails so accessibility settings or huge tablets can't blow up layouts. */
-const MIN_FONT_SCALE_MULTIPLIER = 0.85;
-const MAX_FONT_SCALE_MULTIPLIER = 1.6;
-
-/** Tablets should not scale linearly with width, or text/spacing becomes huge. */
-const TABLET_DAMPING = 0.55;
-const FOLDABLE_DAMPING = 0.65;
-
-type Listener = (snapshot: ScalingSnapshot) => void;
+type Listener = () => void;
 
 class ScalingEngine {
   private width: number;
@@ -28,6 +18,9 @@ class ScalingEngine {
   private fontScale: number;
   private listeners: Set<Listener> = new Set();
   private cache: Map<string, number> = new Map();
+  /** Cached snapshot — replaced only when inputs change (stable for useSyncExternalStore). */
+  private snapshot: ScalingSnapshot;
+  private version = 0;
 
   constructor() {
     const window = Dimensions.get('window');
@@ -36,6 +29,7 @@ class ScalingEngine {
     this.deviceType = getDeviceType(this.width, this.height);
     this.orientation = getOrientation(this.width, this.height);
     this.fontScale = PixelRatio.getFontScale();
+    this.snapshot = this.buildSnapshot();
 
     Dimensions.addEventListener('change', ({ window: win }) => {
       this.width = win.width;
@@ -43,22 +37,51 @@ class ScalingEngine {
       this.deviceType = getDeviceType(this.width, this.height);
       this.orientation = getOrientation(this.width, this.height);
       this.fontScale = PixelRatio.getFontScale();
-      this.cache.clear();
-      this.emit();
+      this.invalidate();
     });
   }
 
+  /**
+   * Apply runtime config (base design size, font-scale clamps, damping).
+   * Clears caches and notifies subscribers so UI recomputes.
+   */
+  configure(partial: PixelFlowConfig): ResolvedPixelFlowConfig {
+    const resolved = setConfig(partial);
+    this.invalidate();
+    return resolved;
+  }
+
+  getConfig(): ResolvedPixelFlowConfig {
+    return getConfig();
+  }
+
+  private invalidate(): void {
+    this.cache.clear();
+    this.version += 1;
+    this.snapshot = this.buildSnapshot();
+    this.emit();
+  }
+
   private emit(): void {
-    const snapshot = this.getSnapshot();
-    this.listeners.forEach((listener) => listener(snapshot));
+    this.listeners.forEach((listener) => listener());
   }
 
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  getVersion(): number {
+    return this.version;
   }
 
   getSnapshot(): ScalingSnapshot {
+    return this.snapshot;
+  }
+
+  private buildSnapshot(): ScalingSnapshot {
     return {
       width: this.width,
       height: this.height,
@@ -69,46 +92,55 @@ class ScalingEngine {
       isLandscape: this.orientation === 'landscape',
       fontScale: this.fontScale,
       pixelDensity: PixelRatio.get(),
+      /** Hybrid scale factor used by spacing (factor 0.5) — matches rp/rm growth. */
+      scale: this.hybridScale(0.5),
     };
   }
 
   /** Raw width-ratio scale, dampened for larger devices so growth isn't 1:1. */
   private widthScale(): number {
-    const rawScale = this.width / BASE_WIDTH;
+    const { baseWidth, tabletDamping, foldableDamping } = getConfig();
+    const rawScale = this.width / baseWidth;
     if (this.deviceType === 'tablet') {
-      return 1 + (rawScale - 1) * TABLET_DAMPING;
+      return 1 + (rawScale - 1) * tabletDamping;
     }
     if (this.deviceType === 'foldable') {
-      return 1 + (rawScale - 1) * FOLDABLE_DAMPING;
+      return 1 + (rawScale - 1) * foldableDamping;
     }
     return rawScale;
   }
 
   private heightScale(): number {
-    const rawScale = this.height / BASE_HEIGHT;
+    const { baseHeight, tabletDamping, foldableDamping } = getConfig();
+    const rawScale = this.height / baseHeight;
     if (this.deviceType === 'tablet') {
-      return 1 + (rawScale - 1) * TABLET_DAMPING;
+      return 1 + (rawScale - 1) * tabletDamping;
     }
     if (this.deviceType === 'foldable') {
-      return 1 + (rawScale - 1) * FOLDABLE_DAMPING;
+      return 1 + (rawScale - 1) * foldableDamping;
     }
     return rawScale;
   }
 
   /**
-   * Hybrid scale: blends width and height scale (so rotation and unusual
-   * aspect ratios don't distort values as badly as width-only scaling),
-   * then nudges the result toward 1 by `factor` — "moderate scaling" — so
-   * values stay visually consistent instead of growing mathematically
-   * proportional to screen size.
+   * Hybrid scale: blends width and height scale, then nudges toward 1 by
+   * `factor` so values stay visually consistent.
    */
-  private hybridScale(factor: number): number {
+  hybridScale(factor: number): number {
     const blended = (this.widthScale() + this.heightScale()) / 2;
     return 1 + (blended - 1) * factor;
   }
 
+  private clampedFontScale(): number {
+    const { minFontScale, maxFontScale, applyAccessibilityFontScale } =
+      getConfig();
+    if (!applyAccessibilityFontScale) return 1;
+    return Math.min(Math.max(this.fontScale, minFontScale), maxFontScale);
+  }
+
   private memo(key: string, compute: () => number): number {
-    const cacheKey = `${key}:${this.width}x${this.height}:${this.fontScale}`;
+    const config = getConfig();
+    const cacheKey = `${key}:${this.width}x${this.height}:${this.fontScale}:${config.baseWidth}x${config.baseHeight}:${config.applyAccessibilityFontScale}:${config.minFontScale}:${config.maxFontScale}`;
     const cached = this.cache.get(cacheKey);
     if (cached !== undefined) return cached;
     const value = compute();
@@ -125,19 +157,14 @@ class ScalingEngine {
   }
 
   /**
-   * Font size scaling: blends width/height scale (factor 0.3 — text should
-   * move far less than raw layout), then applies the OS accessibility font
-   * scale clamped to sane bounds so a user's "huge text" setting doesn't
-   * break layouts, while still respecting their preference somewhat.
+   * Font size scaling. When `applyAccessibilityFontScale` is true, multiplies
+   * by the clamped OS font scale — use with `allowFontScaling={false}` on Text
+   * so RN does not apply font scale again.
    */
   font(size: number): number {
     return this.memo(`f:${size}`, () => {
       const deviceAdjusted = size * this.hybridScale(0.3);
-      const clampedFontScale = Math.min(
-        Math.max(this.fontScale, MIN_FONT_SCALE_MULTIPLIER),
-        MAX_FONT_SCALE_MULTIPLIER,
-      );
-      const result = deviceAdjusted * clampedFontScale;
+      const result = deviceAdjusted * this.clampedFontScale();
       return Math.round(PixelRatio.roundToNearestPixel(result));
     });
   }
@@ -163,19 +190,15 @@ class ScalingEngine {
     );
   }
 
-  /** Line height: should track font scaling closely to avoid clipped text. */
+  /** Line height: tracks font scaling closely to avoid clipped text. */
   lineHeight(value: number): number {
     return this.memo(`l:${value}`, () => {
       const deviceAdjusted = value * this.hybridScale(0.3);
-      const clampedFontScale = Math.min(
-        Math.max(this.fontScale, MIN_FONT_SCALE_MULTIPLIER),
-        MAX_FONT_SCALE_MULTIPLIER,
-      );
-      return Math.round(deviceAdjusted * clampedFontScale);
+      return Math.round(deviceAdjusted * this.clampedFontScale());
     });
   }
 
-  /** Letter spacing: tiny values, very small damping so it never looks odd. */
+  /** Letter spacing: tiny values, very small damping. */
   letterSpacing(value: number): number {
     return this.memo(`ls:${value}`, () => {
       const scaled = value * this.hybridScale(0.15);
@@ -186,3 +209,15 @@ class ScalingEngine {
 
 /** Singleton — one Dimensions listener for the whole app, memoized results. */
 export const scalingEngine = new ScalingEngine();
+
+/**
+ * Configure design baseline, accessibility font-scale behavior, and damping.
+ * Call once at app entry before rendering PixelFlow UI.
+ *
+ * @example
+ * import { configure } from 'react-native-pixelflow';
+ * configure({ baseWidth: 390, baseHeight: 844, maxFontScale: 2 });
+ */
+export function configure(partial: PixelFlowConfig): ResolvedPixelFlowConfig {
+  return scalingEngine.configure(partial);
+}

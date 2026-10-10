@@ -1,8 +1,18 @@
-import type { PixelFlowTheme } from '../types';
+import type { PixelFlowTheme, ThemeSpacing } from '../types';
+
+export const defaultSpacing: ThemeSpacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+};
 
 export const lightTheme: PixelFlowTheme = {
   name: 'light',
   dark: false,
+  spacing: { ...defaultSpacing },
   colors: {
     background: '#FFFFFF',
     surface: '#F5F6F8',
@@ -20,6 +30,7 @@ export const lightTheme: PixelFlowTheme = {
 export const darkTheme: PixelFlowTheme = {
   name: 'dark',
   dark: true,
+  spacing: { ...defaultSpacing },
   colors: {
     background: '#0B0F19',
     surface: '#161B26',
@@ -35,18 +46,20 @@ export const darkTheme: PixelFlowTheme = {
 };
 
 /**
- * Build a custom theme by extending light or dark with color overrides.
+ * Build a custom theme by extending light or dark with color / spacing overrides.
  * @example customTheme({ base: 'dark', colors: { primary: '#FF6B6B' } })
  */
 export function customTheme(options: {
   base?: 'light' | 'dark';
   name?: string;
-  colors: Partial<PixelFlowTheme['colors']>;
+  colors?: Partial<PixelFlowTheme['colors']>;
+  spacing?: Partial<ThemeSpacing>;
 }): PixelFlowTheme {
   const base = options.base === 'dark' ? darkTheme : lightTheme;
   return {
     name: options.name ?? `${base.name}-custom`,
     dark: base.dark,
     colors: { ...base.colors, ...options.colors },
+    spacing: { ...base.spacing, ...options.spacing },
   };
 }

@@ -1,4 +1,5 @@
 import { scalingEngine } from '../core/scalingEngine';
+import type { DeviceType, ResponsiveByDevice } from '../types';
 
 /**
  * Responsive width — returns `percent`% of the current screen width in px.
@@ -18,7 +19,7 @@ export function rh(percent: number): number {
 
 /**
  * Responsive font size. Scales using the hybrid engine (screen size +
- * pixel density + accessibility font scale + tablet/foldable damping).
+ * accessibility font scale when enabled + tablet/foldable damping).
  * @example fontSize: rf(16)
  */
 export function rf(size: number): number {
@@ -74,4 +75,29 @@ export function rl(value: number): number {
  */
 export function rls(value: number): number {
   return scalingEngine.letterSpacing(value);
+}
+
+/**
+ * Pick a value by device class. Falls back: foldable → tablet → phone.
+ *
+ * @example
+ * padding: rs({ phone: rp(16), tablet: rp(24), foldable: rp(20) })
+ * columns: rs({ phone: 1, tablet: 2 })
+ */
+export function rs<T>(values: ResponsiveByDevice<T>): T {
+  return selectForDevice(scalingEngine.getSnapshot().deviceType, values);
+}
+
+/** Shared resolution used by `rs` and `useResponsive().select`. */
+export function selectForDevice<T>(
+  deviceType: DeviceType,
+  values: ResponsiveByDevice<T>,
+): T {
+  if (deviceType === 'tablet') {
+    return values.tablet ?? values.phone;
+  }
+  if (deviceType === 'foldable') {
+    return values.foldable ?? values.tablet ?? values.phone;
+  }
+  return values.phone;
 }

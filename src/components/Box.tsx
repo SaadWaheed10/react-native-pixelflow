@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, type ViewProps, type ViewStyle } from 'react-native';
 import { rp, rm, rr } from '../responsive/responsive';
+import { useScalingVersion } from '../hooks/useScaling';
 
 export interface BoxProps extends ViewProps {
   /** Padding, all sides (responsive). */
@@ -40,6 +41,8 @@ export function Box({
   children,
   ...rest
 }: BoxProps): React.JSX.Element {
+  useScalingVersion();
+
   const boxStyle: ViewStyle = {
     ...(p !== undefined && { padding: rp(p) }),
     ...(px !== undefined && { paddingHorizontal: rp(px) }),

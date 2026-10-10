@@ -1,5 +1,12 @@
 import { defineConfig } from 'tsup';
 
+const external = [
+  'react',
+  'react-native',
+  'expo-font',
+  'react-native-safe-area-context',
+];
+
 export default defineConfig([
   {
     entry: ['src/index.ts'],
@@ -8,7 +15,7 @@ export default defineConfig([
     dts: false,
     sourcemap: true,
     clean: true,
-    external: ['react', 'react-native', 'expo-font', 'react-native-safe-area-context'],
+    external,
   },
   {
     entry: ['src/index.ts'],
@@ -16,13 +23,16 @@ export default defineConfig([
     outDir: 'lib/module',
     dts: false,
     sourcemap: true,
-    external: ['react', 'react-native', 'expo-font', 'react-native-safe-area-context'],
+    external,
+    // RN tooling / package.json "module" expect .js, not .mjs
+    outExtension: () => ({ js: '.js' }),
   },
   {
     entry: ['src/index.ts'],
-    format: ['esm'],
+    // cjs + dts-only emits index.d.ts (esm would emit .d.mts)
+    format: ['cjs'],
     outDir: 'lib/typescript',
     dts: { only: true },
-    external: ['react', 'react-native', 'expo-font', 'react-native-safe-area-context'],
+    external,
   },
 ]);

@@ -4,15 +4,14 @@
 
 Responsive dimensions, typography, spacing, flex layouts, border radius, icon
 sizing, fonts, and theming — built directly on top of React Native's native
-`StyleSheet` API. No styled-components, no NativeWind, no CSS-in-JS. Write
-`StyleSheet.create()` exactly like you always have, just wrap numbers in a
-PixelFlow function.
+`StyleSheet` API. No styled-components, no NativeWind, no CSS-in-JS.
 
 ```ts
 import { StyleSheet } from 'react-native';
-import { rp, rm, rf, rw, rh, rr, fonts } from 'react-native-pixelflow';
+import { rp, rm, rf, rw, rh, rr, fonts, useScaledStyles } from 'react-native-pixelflow';
 
-const styles = StyleSheet.create({
+// Inside a component — recomputes on rotation / font-scale / configure():
+const styles = useScaledStyles(() => ({
   container: {
     padding: rp(16),
     marginTop: rm(20),
@@ -26,46 +25,107 @@ const styles = StyleSheet.create({
     height: rh(25),
     borderRadius: rr(12),
   },
-});
+}));
 ```
 
 ## Install
 
 ```bash
-npm install react-native-pixelflow
+npm install react-native-pixelflow react-native-safe-area-context
 # or
-yarn add react-native-pixelflow
+yarn add react-native-pixelflow react-native-safe-area-context
+# Expo:
+npx expo install react-native-safe-area-context
 ```
 
-Peer dependencies: `react >=17`, `react-native >=0.70`. Works with Hermes,
-Fabric / the New Architecture, and Expo. No native code, no config plugin —
-it's pure JS/TS.
+Peer dependencies: `react >=17`, `react-native >=0.70`,
+`react-native-safe-area-context >=4`.  
+Optional: `expo-font` (if you load Google Fonts via Expo).
+
+Wrap your app root in `SafeAreaProvider` (required for `Container`):
+
+```tsx
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { PixelFlowProvider } from 'react-native-pixelflow';
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <PixelFlowProvider followSystem>
+        {/* screens */}
+      </PixelFlowProvider>
+    </SafeAreaProvider>
+  );
+}
+```
+
+Works with Hermes, Fabric / the New Architecture, and Expo. No native code —
+pure JS/TS.
+
+## Configure (recommended)
+
+Match your design frame once at app entry:
+
+```ts
+import { configure } from 'react-native-pixelflow';
+
+configure({
+  baseWidth: 390,       // default 375
+  baseHeight: 844,      // default 812
+  minFontScale: 0.85,   // clamp OS accessibility font scale
+  maxFontScale: 1.6,
+  applyAccessibilityFontScale: true, // rf/rl multiply by OS scale
+});
+```
+
+When `applyAccessibilityFontScale` is `true` (default), PixelFlow scales fonts
+and `FText` sets `allowFontScaling={false}` so React Native does **not** apply
+font scale twice. Pass `allowFontScaling` on `FText` to override, or set
+`applyAccessibilityFontScale: false` to leave accessibility entirely to RN.
 
 ## Why react-native-PixelFlow
 
 Most responsive-scaling libraries do one thing: width-based font/size
-scaling. react-native-PixelFlow instead runs a **hybrid scaling engine** that blends:
+scaling. react-native-PixelFlow runs a **hybrid scaling engine** that blends:
 
-- Screen width *and* height (so rotation doesn't distort values the way
-  width-only scaling does)
-- Device classification — phone / tablet / foldable — with damping applied
-  on larger screens so tablets don't get comically large text and padding
-- OS accessibility font scale (`PixelRatio.getFontScale()`), clamped to a
-  sane range so a user's "huge text" setting doesn't break your layout
+- Screen width *and* height (rotation does not distort like width-only scaling)
+- Device classification — phone / tablet / foldable — with damping on larger screens
+- OS accessibility font scale, clamped to a configurable range
 - Pixel density, for crisp, whole-pixel output
 
-Each responsive function applies a different scaling *factor* tuned to what
-it represents — fonts and icons move more than radii, radii move very
-little, spacing sits in between — producing results that look visually
-consistent across devices rather than growing strictly proportional to
-screen size.
+### Example values (`rf(16)` / `rp(16)` / `rr(12)`, font scale 1, default config)
+
+| Device (logical) | Class | `rf(16)` | `rp(16)` | `rr(12)` |
+|---|---|---|---|---|
+| 375 × 812 | phone | ~16 | ~16 | ~12 |
+| 390 × 844 | phone | ~16–17 | ~16–17 | ~12 |
+| 674 × 841 | foldable | damped | damped | gentle |
+| 1024 × 1366 | tablet | damped | damped | gentle |
+
+Exact pixels depend on density rounding; the important part is tablets/foldables
+grow slower than raw `width / 375`.
+
+## Live styles (important)
+
+`rp(16)` returns a **number for the current snapshot**. If you call it inside a
+module-level `StyleSheet.create(...)`, that number is frozen at import time and
+will **not** update on rotation.
+
+Prefer:
+
+| API | When to use |
+|---|---|
+| `useScaledStyles(() => ({ ... }))` | StyleSheets that must stay live |
+| `useTypography()` / `useThemeSpacing()` | Live type + spacing tokens |
+| Components (`Box`, `FText`, …) | Already subscribe to the engine |
+| Module-level `StyleSheet` + `rp`/`rf` | Static layouts that never rotate / resize |
 
 ## Responsive functions
 
 | Function | Purpose | Example |
 |---|---|---|
-| `rw(percent)` | % of screen width | `rw(90)` → 90% of width |
-| `rh(percent)` | % of screen height | `rh(30)` → 30% of height |
+| `rw(percent)` | % of screen width | `rw(90)` |
+| `rh(percent)` | % of screen height | `rh(30)` |
 | `rf(size)` | Responsive font size | `rf(16)` |
 | `rp(value)` | Responsive padding | `rp(16)` |
 | `rm(value)` | Responsive margin | `rm(20)` |
@@ -73,10 +133,10 @@ screen size.
 | `ri(value)` | Responsive icon size | `ri(24)` |
 | `rl(value)` | Responsive line height | `rl(24)` |
 | `rls(value)` | Responsive letter spacing | `rls(1.2)` |
+| `rs({ phone, tablet?, foldable? })` | Per-device value | `rs({ phone: 1, tablet: 2 })` |
 
-All values are memoized and re-computed only when the window dimensions or
-accessibility font scale actually change (one shared `Dimensions` listener
-for the whole app).
+All values are memoized and re-computed when the window dimensions, accessibility
+font scale, or `configure()` change (one shared `Dimensions` listener).
 
 ## Flex utilities
 
@@ -90,14 +150,16 @@ const styles = StyleSheet.create({
 ```
 
 Available: `center`, `row`, `column`, `between`, `around`, `evenly`, `start`,
-`end`, `wrap`, `fill`.
+`end`, `wrap`, `fill` (fully typed for autocomplete).
 
 ## Typography
 
 ```ts
-import { typography, createTypography } from 'react-native-pixelflow';
+import { typography, createTypography, useTypography } from 'react-native-pixelflow';
 
-<Text style={typography.h1}>Welcome</Text>
+// In components (live):
+const type = useTypography();
+<Text style={type.h1}>Welcome</Text>
 
 // Or build a scale on a different default family:
 const jakarta = createTypography('plusJakartaSans');
@@ -115,12 +177,8 @@ fontFamily: fonts.poppins.semibold
 fontFamily: fonts.roboto.bold
 ```
 
-react-native-PixelFlow ships a curated map of 21 Google Font families (Inter, Roboto,
-Poppins, Montserrat, Open Sans, Lato, Nunito, Raleway, Outfit, Rubik, Work
-Sans, Urbanist, Manrope, DM Sans, Plus Jakarta Sans, Mulish, Ubuntu,
-Quicksand, Merriweather, Playfair Display, Noto Sans) to font-family
-*strings* — it does **not** bundle the actual font binaries, so every
-consumer's bundle only grows by the faces they actually load.
+Curated map of 21 Google Font families to font-family **strings** — binaries are
+not bundled. See the table in `src/fonts/fontRegistry.ts` for Expo package names.
 
 **Loading fonts (Expo):**
 
@@ -134,14 +192,12 @@ import { useFonts, Inter_400Regular, Inter_700Bold } from '@expo-google-fonts/in
 const [fontsLoaded] = useFonts({ Inter_400Regular, Inter_700Bold });
 ```
 
-**Loading fonts (bare React Native):** download the `.ttf` files for the
-weights you need, drop them in `assets/fonts`, add the folder to
-`react-native.config.js` under `assets`, and run `npx react-native-asset`
-(or link manually on iOS). The filenames must match the family strings in
-`fonts.ts`, e.g. `Inter_700Bold.ttf`.
+**Loading fonts (bare React Native):** download the `.ttf` files, add them under
+`assets/fonts`, register via `react-native.config.js`, run `npx react-native-asset`.
+Filenames must match registry strings, e.g. `Inter_700Bold.ttf`.
 
-`buildFontMap()` is a small helper for wiring your own `require()`s into the
-shape `expo-font`'s `useFonts` expects — see the JSDoc in `src/fonts/fonts.ts`.
+`buildFontMap()` wires your own `require()`s into the shape `useFonts` expects
+and **warns** on unknown weight keys.
 
 ## Components
 
@@ -162,7 +218,8 @@ import { Container, Box, Row, Column, Spacer, FText } from 'react-native-pixelfl
 </Container>
 ```
 
-- **`Container`** — safe-area aware, theme background, responsive padding
+- **`Container`** — `SafeAreaView` from `react-native-safe-area-context`,
+  theme background, responsive padding (`safeArea={false}` for a plain `View`)
 - **`Box`** — `p`, `px`, `py`, `m`, `mx`, `my`, `radius`, `bg`, `flex`
 - **`Row`** / **`Column`** — flex layout with responsive `gap`
 - **`Spacer`** — `size` (responsive), optional `axis`
@@ -171,49 +228,76 @@ import { Container, Box, Row, Column, Spacer, FText } from 'react-native-pixelfl
 ## Hooks
 
 ```ts
-const { width, height, scale, isTablet, isFoldable, isLandscape } = useResponsive();
+const { width, height, scale, isTablet, isFoldable, isLandscape, select } =
+  useResponsive();
+
+const columns = select({ phone: 1, tablet: 2, foldable: 2 });
 const { h1, body } = useTypography();
 const { deviceType, orientation, pixelDensity } = useDevice();
+const styles = useScaledStyles(() => ({ title: { fontSize: rf(24) } }));
+const spacing = useThemeSpacing(); // theme.spacing passed through rp()
 ```
+
+`scale` matches the hybrid spacing curve used by `rp` / `rm` (not raw `width / 375`).
 
 ## Theming
 
 ```tsx
-import { PixelFlowProvider, lightTheme, darkTheme, customTheme, useTheme } from 'react-native-pixelflow';
+import {
+  PixelFlowProvider,
+  lightTheme,
+  darkTheme,
+  customTheme,
+  useTheme,
+} from 'react-native-pixelflow';
 
-const brandTheme = customTheme({ base: 'dark', colors: { primary: '#FF6B6B' } });
+const brandTheme = customTheme({
+  base: 'dark',
+  colors: { primary: '#FF6B6B' },
+  spacing: { md: 20 },
+});
 
-<PixelFlowProvider theme={darkTheme}>
+// Follow OS light/dark:
+<PixelFlowProvider followSystem>
+  <App />
+</PixelFlowProvider>
+
+// Or pin a theme:
+<PixelFlowProvider theme={brandTheme}>
   <App />
 </PixelFlowProvider>
 ```
 
-`useTheme()` inside any child returns the active `PixelFlowTheme` (`colors`,
-`dark`, `name`).
+`useTheme()` returns `colors`, `spacing`, `dark`, `name`.
 
 ## TypeScript
 
-Written in strict-mode TypeScript with a fully typed public API. `any` is
-not used anywhere in the source.
+Strict-mode TypeScript with a fully typed public API. `flex.*` and `fonts.*`
+preserve literal keys for editor autocomplete.
 
 ## Compatibility
 
-React Native 0.70 through 0.86+, Hermes, Fabric / New Architecture,
-TurboModules, and Expo (managed or bare). No native modules — everything is
-pure JavaScript/TypeScript, so there's nothing to autolink.
+React Native 0.70 through 0.86+, Hermes, Fabric / New Architecture, and Expo
+(managed or bare). No native modules.
+
+## Example
+
+See [`example/ExampleScreen.tsx`](./example/ExampleScreen.tsx) for a screen that
+wires `configure`, `useScaledStyles`, `rs` / `select`, and `followSystem` theming.
+Drop it into an Expo or RN app to try the API.
 
 ## Project layout
 
 ```
 src/
-  core/            scaling engine + device detection (the algorithm)
-  responsive/       rw, rh, rf, rp, rm, rr, ri, rl, rls
+  core/            scaling engine, config, device detection
+  responsive/       rw, rh, rf, rp, rm, rr, ri, rl, rls, rs
   flex/             flex.* helpers
   typography/       typography scale
   fonts/            font family registry + loader helper
   theme/            light/dark/custom themes + PixelFlowProvider
   components/       Container, Box, Row, Column, Spacer, FText
-  hooks/            useResponsive, useTypography, useDevice
+  hooks/            useResponsive, useTypography, useDevice, useScaledStyles
   types/            shared TS types
 ```
 
@@ -222,9 +306,14 @@ src/
 ```bash
 npm install
 npm run typecheck
+npm test
 npm run build     # emits lib/commonjs, lib/module, lib/typescript via tsup
 ```
 
 ## License
 
-MIT
+MIT — see [LICENSE](./LICENSE).
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md).

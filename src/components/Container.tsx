@@ -3,19 +3,24 @@ import { StyleSheet, View, type ViewProps, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { rp } from '../responsive/responsive';
 import { useTheme } from '../theme/ThemeProvider';
+import { useScalingVersion } from '../hooks/useScaling';
 
 export interface ContainerProps extends ViewProps {
   /** Responsive padding applied to all sides. Default 16. */
   padding?: number;
   /** Skip theme background color (transparent instead). */
   transparent?: boolean;
-  /** Render as a plain View instead of SafeAreaView. */
+  /**
+   * When true (default), wrap content in `SafeAreaView` from
+   * `react-native-safe-area-context`. Set false for a plain `View`.
+   */
   safeArea?: boolean;
 }
 
 /**
  * Root screen wrapper: safe-area aware (via `react-native-safe-area-context`),
  * theme-aware background, responsive default padding.
+ * App root must be wrapped in `SafeAreaProvider`.
  * @example <Container><YourScreenContent /></Container>
  */
 export function Container({
@@ -26,6 +31,7 @@ export function Container({
   children,
   ...rest
 }: ContainerProps): React.JSX.Element {
+  useScalingVersion();
   const theme = useTheme();
   const Wrapper = safeArea ? SafeAreaView : View;
 
