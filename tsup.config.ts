@@ -9,7 +9,7 @@ const external = [
 
 export default defineConfig([
   {
-    entry: ['src/index.ts'],
+    entry: ['src/index.ts', 'src/testing/index.ts'],
     format: ['cjs'],
     outDir: 'lib/commonjs',
     dts: false,
@@ -18,18 +18,16 @@ export default defineConfig([
     external,
   },
   {
-    entry: ['src/index.ts'],
+    entry: ['src/index.ts', 'src/testing/index.ts'],
     format: ['esm'],
     outDir: 'lib/module',
     dts: false,
     sourcemap: true,
     external,
-    // RN tooling / package.json "module" expect .js, not .mjs
     outExtension: () => ({ js: '.js' }),
   },
   {
-    entry: ['src/index.ts'],
-    // cjs + dts-only emits index.d.ts (esm would emit .d.mts)
+    entry: ['src/index.ts', 'src/testing/index.ts'],
     format: ['cjs'],
     outDir: 'lib/typescript',
     dts: { only: true },

@@ -58,5 +58,18 @@ vi.mock('react-native', () => {
     View: 'View',
     Text: 'Text',
     useColorScheme: () => 'light',
+    AccessibilityInfo: {
+      isReduceMotionEnabled: async () => false,
+      addEventListener: () => ({ remove: () => {} }),
+    },
+    Keyboard: {
+      addListener: () => ({ remove: () => {} }),
+    },
   };
 });
+
+vi.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: 'SafeAreaView',
+  SafeAreaProvider: ({ children }: { children: unknown }) => children,
+  useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 }),
+}));

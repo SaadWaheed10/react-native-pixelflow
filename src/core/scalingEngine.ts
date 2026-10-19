@@ -6,6 +6,7 @@ import {
   type PixelFlowConfig,
   type ResolvedPixelFlowConfig,
 } from './config';
+import { getDensityMultiplier } from './density';
 import type { DeviceType, Orientation, ScalingSnapshot } from '../types';
 
 type Listener = () => void;
@@ -53,6 +54,23 @@ class ScalingEngine {
 
   getConfig(): ResolvedPixelFlowConfig {
     return getConfig();
+  }
+
+  /**
+   * Testing helper — set window size / font scale without a Dimensions event.
+   * Prefer `mockDimensions()` from `react-native-pixelflow/testing`.
+   */
+  setWindowForTesting(
+    width: number,
+    height: number,
+    fontScale: number = this.fontScale,
+  ): void {
+    this.width = width;
+    this.height = height;
+    this.deviceType = getDeviceType(this.width, this.height);
+    this.orientation = getOrientation(this.width, this.height);
+    this.fontScale = fontScale;
+    this.invalidate();
   }
 
   private invalidate(): void {
@@ -138,9 +156,19 @@ class ScalingEngine {
     return Math.min(Math.max(this.fontScale, minFontScale), maxFontScale);
   }
 
+  /** Width scale with tablet/foldable damping — used by size-matters aliases. */
+  getWidthScale(): number {
+    return this.widthScale();
+  }
+
+  /** Height scale with tablet/foldable damping — used by size-matters aliases. */
+  getHeightScale(): number {
+    return this.heightScale();
+  }
+
   private memo(key: string, compute: () => number): number {
     const config = getConfig();
-    const cacheKey = `${key}:${this.width}x${this.height}:${this.fontScale}:${config.baseWidth}x${config.baseHeight}:${config.applyAccessibilityFontScale}:${config.minFontScale}:${config.maxFontScale}`;
+    const cacheKey = `${key}:${this.width}x${this.height}:${this.fontScale}:${config.baseWidth}x${config.baseHeight}:${config.applyAccessibilityFontScale}:${config.minFontScale}:${config.maxFontScale}:${config.density}`;
     const cached = this.cache.get(cacheKey);
     if (cached !== undefined) return cached;
     const value = compute();
@@ -169,11 +197,12 @@ class ScalingEngine {
     });
   }
 
-  /** Spacing (padding/margin): moderate scale, factor 0.5. */
+  /** Spacing (padding/margin): moderate scale × density. */
   spacing(value: number): number {
-    return this.memo(`s:${value}`, () =>
-      Math.round(value * this.hybridScale(0.5)),
-    );
+    return this.memo(`s:${value}`, () => {
+      const density = getDensityMultiplier(getConfig().density);
+      return Math.round(value * this.hybridScale(0.5) * density);
+    });
   }
 
   /** Border radius: should barely change across devices — factor 0.35. */
@@ -211,11 +240,11 @@ class ScalingEngine {
 export const scalingEngine = new ScalingEngine();
 
 /**
- * Configure design baseline, accessibility font-scale behavior, and damping.
+ * Configure design baseline, Figma presets, accessibility font-scale, and damping.
  * Call once at app entry before rendering PixelFlow UI.
  *
  * @example
- * import { configure } from 'react-native-pixelflow';
+ * configure({ figma: 'iPhone 14' });
  * configure({ baseWidth: 390, baseHeight: 844, maxFontScale: 2 });
  */
 export function configure(partial: PixelFlowConfig): ResolvedPixelFlowConfig {

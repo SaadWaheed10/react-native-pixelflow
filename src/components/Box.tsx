@@ -1,59 +1,155 @@
-import React from 'react';
-import { View, type ViewProps, type ViewStyle } from 'react-native';
-import { rp, rm, rr } from '../responsive/responsive';
+import React, { useMemo } from 'react';
+import { View, type FlexStyle, type ViewProps, type ViewStyle } from 'react-native';
+import { useTheme } from '../theme/ThemeProvider';
 import { useScalingVersion } from '../hooks/useScaling';
+import {
+  resolveColor,
+  resolveRadius,
+  resolveSpacing,
+  type ColorInput,
+  type RadiusInput,
+  type SpacingInput,
+} from '../tokens/resolveTokens';
+import { resolveResponsiveValue } from '../responsive/resolveValue';
+import type { ResponsiveValue } from '../types';
 
 export interface BoxProps extends ViewProps {
-  /** Padding, all sides (responsive). */
-  p?: number;
-  /** Padding horizontal (responsive). */
-  px?: number;
-  /** Padding vertical (responsive). */
-  py?: number;
-  /** Margin, all sides (responsive). */
-  m?: number;
-  /** Margin horizontal (responsive). */
-  mx?: number;
-  /** Margin vertical (responsive). */
-  my?: number;
-  /** Border radius (responsive). */
-  radius?: number;
-  /** Background color. */
-  bg?: string;
-  /** flex value. */
+  /** Padding — number, spacing token (`"md"`), or responsive map/tuple. */
+  p?: SpacingInput;
+  px?: SpacingInput;
+  py?: SpacingInput;
+  pt?: SpacingInput;
+  pb?: SpacingInput;
+  pl?: SpacingInput;
+  pr?: SpacingInput;
+  /** Margin — number, spacing token, or responsive. */
+  m?: SpacingInput;
+  mx?: SpacingInput;
+  my?: SpacingInput;
+  mt?: SpacingInput;
+  mb?: SpacingInput;
+  ml?: SpacingInput;
+  mr?: SpacingInput;
+  /** Gap (flex). */
+  gap?: SpacingInput;
+  /** Border radius — number, radius token (`"lg"`), or responsive. */
+  radius?: RadiusInput;
+  /** Background — color token (`"surface"`) or raw color, or responsive. */
+  bg?: ColorInput;
+  /** Border color token / raw. */
+  borderColor?: ColorInput;
+  borderWidth?: number;
   flex?: number;
+  flexDirection?: ResponsiveValue<FlexStyle['flexDirection']>;
+  align?: ResponsiveValue<FlexStyle['alignItems']>;
+  justify?: ResponsiveValue<FlexStyle['justifyContent']>;
+  wrap?: boolean;
 }
 
 /**
- * @example <Box p={16} m={12} radius={10} bg="#fff" />
+ * Layout primitive with design tokens + responsive props.
+ *
+ * @example
+ * <Box p="md" px={{ compact: 'sm', medium: 'lg' }} bg="surface" radius="lg" />
+ * <Box p={16} bg="#fff" />
  */
 export function Box({
   p,
   px,
   py,
+  pt,
+  pb,
+  pl,
+  pr,
   m,
   mx,
   my,
+  mt,
+  mb,
+  ml,
+  mr,
+  gap,
   radius,
   bg,
+  borderColor,
+  borderWidth,
   flex,
+  flexDirection,
+  align,
+  justify,
+  wrap,
   style,
   children,
   ...rest
 }: BoxProps): React.JSX.Element {
-  useScalingVersion();
+  const version = useScalingVersion();
+  const theme = useTheme();
 
-  const boxStyle: ViewStyle = {
-    ...(p !== undefined && { padding: rp(p) }),
-    ...(px !== undefined && { paddingHorizontal: rp(px) }),
-    ...(py !== undefined && { paddingVertical: rp(py) }),
-    ...(m !== undefined && { margin: rm(m) }),
-    ...(mx !== undefined && { marginHorizontal: rm(mx) }),
-    ...(my !== undefined && { marginVertical: rm(my) }),
-    ...(radius !== undefined && { borderRadius: rr(radius) }),
-    ...(bg !== undefined && { backgroundColor: bg }),
-    ...(flex !== undefined && { flex }),
-  };
+  const boxStyle = useMemo((): ViewStyle => {
+    const resolved: ViewStyle = {
+      ...(p !== undefined && { padding: resolveSpacing(p, theme) }),
+      ...(px !== undefined && { paddingHorizontal: resolveSpacing(px, theme) }),
+      ...(py !== undefined && { paddingVertical: resolveSpacing(py, theme) }),
+      ...(pt !== undefined && { paddingTop: resolveSpacing(pt, theme) }),
+      ...(pb !== undefined && { paddingBottom: resolveSpacing(pb, theme) }),
+      ...(pl !== undefined && { paddingLeft: resolveSpacing(pl, theme) }),
+      ...(pr !== undefined && { paddingRight: resolveSpacing(pr, theme) }),
+      ...(m !== undefined && { margin: resolveSpacing(m, theme) }),
+      ...(mx !== undefined && { marginHorizontal: resolveSpacing(mx, theme) }),
+      ...(my !== undefined && { marginVertical: resolveSpacing(my, theme) }),
+      ...(mt !== undefined && { marginTop: resolveSpacing(mt, theme) }),
+      ...(mb !== undefined && { marginBottom: resolveSpacing(mb, theme) }),
+      ...(ml !== undefined && { marginLeft: resolveSpacing(ml, theme) }),
+      ...(mr !== undefined && { marginRight: resolveSpacing(mr, theme) }),
+      ...(gap !== undefined && { gap: resolveSpacing(gap, theme) }),
+      ...(radius !== undefined && { borderRadius: resolveRadius(radius, theme) }),
+      ...(bg !== undefined && { backgroundColor: resolveColor(bg, theme) }),
+      ...(borderColor !== undefined && {
+        borderColor: resolveColor(borderColor, theme),
+      }),
+      ...(borderWidth !== undefined && { borderWidth }),
+      ...(flex !== undefined && { flex }),
+      ...(flexDirection !== undefined && {
+        flexDirection: resolveResponsiveValue(flexDirection),
+      }),
+      ...(align !== undefined && {
+        alignItems: resolveResponsiveValue(align),
+      }),
+      ...(justify !== undefined && {
+        justifyContent: resolveResponsiveValue(justify),
+      }),
+      ...(wrap && { flexWrap: 'wrap' }),
+    };
+    return resolved;
+    // version + theme drive recomputation of rp/token resolution
+  }, [
+    version,
+    theme,
+    p,
+    px,
+    py,
+    pt,
+    pb,
+    pl,
+    pr,
+    m,
+    mx,
+    my,
+    mt,
+    mb,
+    ml,
+    mr,
+    gap,
+    radius,
+    bg,
+    borderColor,
+    borderWidth,
+    flex,
+    flexDirection,
+    align,
+    justify,
+    wrap,
+  ]);
 
   return (
     <View style={[boxStyle, style]} {...rest}>

@@ -1,12 +1,15 @@
 {
   "name": "react-native-pixelflow",
-  "version": "0.2.0",
-  "description": "One package for responsive React Native UI — responsive dimensions, typography, spacing, flex, fonts and theming, built directly on React Native's native StyleSheet API.",
+  "version": "0.3.0",
+  "description": "Professional React Native responsive design system — hybrid scaling, tokens, PixelSheet, variants, density, a11y layout, grids, and adaptive shells.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
   "types": "./lib/typescript/index.d.ts",
   "react-native": "./src/index.ts",
   "source": "./src/index.ts",
+  "bin": {
+    "pixelflow": "./bin/pixelflow.js"
+  },
   "sideEffects": false,
   "exports": {
     ".": {
@@ -16,11 +19,22 @@
       "require": "./lib/commonjs/index.js",
       "default": "./lib/module/index.js"
     },
+    "./testing": {
+      "types": "./lib/typescript/testing/index.d.ts",
+      "react-native": "./src/testing/index.ts",
+      "import": "./lib/module/testing/index.js",
+      "require": "./lib/commonjs/testing/index.js",
+      "default": "./lib/module/testing/index.js"
+    },
+    "./eslint-plugin": "./eslint-plugin/index.js",
     "./package.json": "./package.json"
   },
   "files": [
     "src",
     "lib",
+    "bin",
+    "eslint-plugin",
+    "example",
     "LICENSE",
     "CHANGELOG.md",
     "!**/__tests__",
@@ -45,7 +59,13 @@
     "foldable",
     "fonts",
     "google-fonts",
-    "theme"
+    "theme",
+    "figma",
+    "breakpoints",
+    "grid",
+    "adaptive-layout",
+    "design-tokens",
+    "eslint-plugin"
   ],
   "author": "Saad Waheed Khan",
   "repository": {

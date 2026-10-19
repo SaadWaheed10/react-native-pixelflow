@@ -1,12 +1,28 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
-import type { PixelFlowTheme, ThemeSpacing } from '../types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { Density, PixelFlowTheme, ThemeRadii, ThemeSpacing } from '../types';
 import { darkTheme, lightTheme } from './themes';
-import { rp } from '../responsive/responsive';
+import { rp, rr } from '../responsive/responsive';
 import { useScalingVersion } from '../hooks/useScaling';
+import { configure } from '../core/scalingEngine';
+import { setSafeInsets } from '../core/safeInsets';
 
 const ThemeContext = createContext<PixelFlowTheme>(lightTheme);
+
+function SafeInsetsSync(): null {
+  const insets = useSafeAreaInsets();
+  useEffect(() => {
+    setSafeInsets({
+      top: insets.top,
+      bottom: insets.bottom,
+      left: insets.left,
+      right: insets.right,
+    });
+  }, [insets.top, insets.bottom, insets.left, insets.right]);
+  return null;
+}
 
 export interface PixelFlowProviderProps {
   /**
@@ -22,31 +38,39 @@ export interface PixelFlowProviderProps {
   light?: PixelFlowTheme;
   /** Theme used for dark scheme when `followSystem` is true. */
   dark?: PixelFlowTheme;
+  /**
+   * Spacing density for the whole tree. Syncs into `configure({ density })`.
+   */
+  density?: Density;
   children: ReactNode;
 }
 
 /**
- * Wrap your app root to make a theme available to PixelFlow components and
- * `useTheme()`.
+ * Wrap your app root (inside `SafeAreaProvider`) to provide theme, density,
+ * and safe-inset sync for `rsw` / `rsh`.
  *
  * @example
- * <PixelFlowProvider followSystem>
- *   <App />
- * </PixelFlowProvider>
- *
- * @example
- * <PixelFlowProvider theme={darkTheme}>
- *   <App />
- * </PixelFlowProvider>
+ * <SafeAreaProvider>
+ *   <PixelFlowProvider followSystem density="comfortable">
+ *     <App />
+ *   </PixelFlowProvider>
+ * </SafeAreaProvider>
  */
 export function PixelFlowProvider({
   theme,
   followSystem = false,
   light = lightTheme,
   dark = darkTheme,
+  density,
   children,
 }: PixelFlowProviderProps): React.JSX.Element {
   const scheme = useColorScheme();
+
+  useEffect(() => {
+    if (density !== undefined) {
+      configure({ density });
+    }
+  }, [density]);
 
   const value = useMemo(() => {
     if (theme) return theme;
@@ -57,7 +81,10 @@ export function PixelFlowProvider({
   }, [theme, followSystem, scheme, light, dark]);
 
   return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>
+      <SafeInsetsSync />
+      {children}
+    </ThemeContext.Provider>
   );
 }
 
@@ -66,8 +93,7 @@ export function useTheme(): PixelFlowTheme {
 }
 
 /**
- * Theme spacing tokens passed through `rp()` so they stay live with the
- * scaling engine.
+ * Theme spacing tokens passed through `rp()` (includes density).
  */
 export function useThemeSpacing(): ThemeSpacing {
   const theme = useTheme();
@@ -82,5 +108,22 @@ export function useThemeSpacing(): ThemeSpacing {
       xxl: rp(theme.spacing.xxl),
     }),
     [theme.spacing, version],
+  );
+}
+
+/** Theme radii tokens passed through `rr()`. */
+export function useThemeRadii(): ThemeRadii {
+  const theme = useTheme();
+  const version = useScalingVersion();
+  return useMemo(
+    () => ({
+      none: rr(theme.radii.none),
+      sm: rr(theme.radii.sm),
+      md: rr(theme.radii.md),
+      lg: rr(theme.radii.lg),
+      xl: rr(theme.radii.xl),
+      full: theme.radii.full,
+    }),
+    [theme.radii, version],
   );
 }

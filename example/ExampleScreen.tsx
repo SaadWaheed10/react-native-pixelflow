@@ -3,7 +3,7 @@
  * showing the library's pieces working together in a real screen.
  */
 import React from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   Container,
@@ -12,112 +12,130 @@ import {
   Column,
   Spacer,
   FText,
+  Grid,
+  ContentWidth,
   flex,
   rp,
-  rm,
   rf,
   rw,
   rh,
   rr,
   rs,
   fonts,
+  design,
+  configure,
   useResponsive,
   useDevice,
-  useScaledStyles,
   useTypography,
+  useWindowClass,
+  usePixelSheet,
+  useA11yLayout,
   PixelFlowProvider,
-  configure,
+  PixelFlowDebug,
 } from 'react-native-pixelflow';
 
-// Optional: match your Figma frame once at app entry.
-configure({ baseWidth: 375, baseHeight: 812 });
+// Match your Figma frame once at app entry:
+configure({ figma: 'iPhone 14', density: 'comfortable' });
 
 function Content(): React.JSX.Element {
   const { isTablet, isLandscape, width, select, scale } = useResponsive();
   const { deviceType, orientation } = useDevice();
   const type = useTypography();
-  const styles = useScaledStyles(() => ({
+  const { widthClass, columns, nav, meets } = useWindowClass();
+  const { preferStack, layout } = useA11yLayout();
+
+  const styles = usePixelSheet(() => ({
     scroll: {
-      paddingBottom: rp(40),
+      paddingBottom: 40,
     },
     card: {
       ...flex.center,
+      padding: 12,
+      borderRadius: 12,
+      minHeight: 88,
     },
     cardLabel: {
       color: '#fff',
-      fontSize: rf(13),
+      fontSize: 13,
       fontFamily: fonts.inter.medium,
       textAlign: 'center',
-      paddingHorizontal: rp(8),
     },
-    legacyCard: {
-      padding: rp(16),
-      marginTop: rm(8),
-      borderRadius: rr(12),
+    panel: {
+      padding: 16,
+      borderRadius: 12,
       backgroundColor: '#F5F6F8',
-    },
-    legacyTitle: {
-      fontSize: rf(15),
-      fontFamily: fonts.inter.regular,
     },
   }));
 
-  const columns = select({ phone: 1, tablet: 2, foldable: 2 });
   const cardWidth = rs({ phone: rw(43), tablet: rw(30), foldable: rw(40) });
 
   return (
     <Container>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <FText style={type.h1}>react-native-PixelFlow</FText>
-        <FText secondary>One package for responsive React Native UI.</FText>
-        <Spacer size={16} />
+        <ContentWidth>
+          <FText style={type.h1}>react-native-PixelFlow</FText>
+          <FText secondary>
+            PixelSheet · window classes · grid · Figma presets · SplitView
+          </FText>
+          <Spacer size={16} />
 
-        <Box p={16} radius={12} bg="#F5F6F8" style={flex.between}>
-          <Column gap={4}>
-            <FText weight="semibold">Device</FText>
-            <FText size={13} secondary>
-              {deviceType} · {orientation} · {Math.round(width)}px · scale{' '}
-              {scale.toFixed(2)}
+          <Box
+            p="md"
+            radius="lg"
+            bg="surface"
+            flexDirection={preferStack ? 'column' : 'row'}
+            justify="space-between"
+            gap="sm"
+          >
+            <Column gap={4}>
+              <FText variant="subtitle" weight="semibold">
+                Window
+              </FText>
+              <FText size={13} color="textSecondary">
+                {widthClass} · {nav} · {columns} cols · {deviceType} ·{' '}
+                {Math.round(width)}px · scale {scale.toFixed(2)} · a11y {layout}
+              </FText>
+            </Column>
+            <FText size={13} color="textSecondary">
+              {meets('medium') ? 'split-ready' : 'phone layout'}
             </FText>
-          </Column>
-          <FText size={13} secondary>
-            {isTablet ? 'tablet layout' : `${columns} col`}
-          </FText>
-        </Box>
-
-        <Spacer size={16} />
-
-        <Row gap={12}>
-          <Box
-            style={[styles.card, { width: cardWidth, height: rh(14) }]}
-            radius={12}
-            bg="#4F46E5"
-          >
-            <FText style={styles.cardLabel}>rs() card</FText>
           </Box>
-          <Box
-            style={[styles.card, { width: cardWidth, height: rh(14) }]}
-            radius={12}
-            bg="#111827"
-          >
-            <FText style={styles.cardLabel}>useScaledStyles</FText>
-          </Box>
-        </Row>
 
-        <Spacer size={16} />
+          <Spacer size={16} />
 
-        <FText style={type.h3}>Live StyleSheet</FText>
-        <Box style={styles.legacyCard}>
-          <FText style={styles.legacyTitle}>
-            Styles recompute on rotation via useScaledStyles()
-          </FText>
-        </Box>
+          <FText style={type.h3}>Grid (minItemWidth 160)</FText>
+          <Spacer size={8} />
+          <Grid minItemWidth={160} gap={12}>
+            {['A', 'B', 'C', 'D'].map((label) => (
+              <View key={label} style={[styles.card, { backgroundColor: '#4F46E5' }]}>
+                <FText style={styles.cardLabel}>Cell {label}</FText>
+              </View>
+            ))}
+          </Grid>
 
-        {isLandscape && (
-          <FText size={12} secondary>
-            (Rotate back to portrait to see the layout adapt.)
-          </FText>
-        )}
+          <Spacer size={16} />
+
+          <Row gap={12}>
+            <Box
+              style={[styles.card, { width: cardWidth, height: rh(14), backgroundColor: '#111827' }]}
+              radius={12}
+            >
+              <FText style={styles.cardLabel}>design({design(16)})</FText>
+            </Box>
+            <Box style={[styles.panel, { flex: 1 }]}>
+              <FText size={13} secondary>
+                {orientation}
+                {isLandscape ? ' · rotate for live PixelSheet' : ''}
+                {isTablet ? ' · tablet' : ''}
+                {' · '}
+                {select({ phone: '1-col nav', tablet: 'rail', foldable: 'dual' })}
+              </FText>
+              <FText size={12} secondary>
+                rf {rf(14)} · rr {rr(8)} · rp {rp(12)}
+              </FText>
+            </Box>
+          </Row>
+        </ContentWidth>
       </ScrollView>
     </Container>
   );
@@ -126,8 +144,9 @@ function Content(): React.JSX.Element {
 export default function ExampleScreen(): React.JSX.Element {
   return (
     <SafeAreaProvider>
-      <PixelFlowProvider followSystem>
+      <PixelFlowProvider followSystem density="comfortable">
         <Content />
+        <PixelFlowDebug />
       </PixelFlowProvider>
     </SafeAreaProvider>
   );

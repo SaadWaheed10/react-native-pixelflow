@@ -1,186 +1,290 @@
 # react-native-PixelFlow
 
-**One package for responsive React Native UI.**
+**Responsive React Native UI that stays simple.**
 
-Responsive dimensions, typography, spacing, flex layouts, border radius, icon
-sizing, fonts, and theming — built directly on top of React Native's native
-`StyleSheet` API. No styled-components, no NativeWind, no CSS-in-JS.
+Write normal StyleSheet numbers (or design tokens). PixelFlow scales them for
+phones, tablets, and foldables — without NativeWind or CSS-in-JS.
 
-```ts
-import { StyleSheet } from 'react-native';
-import { rp, rm, rf, rw, rh, rr, fonts, useScaledStyles } from 'react-native-pixelflow';
+---
 
-// Inside a component — recomputes on rotation / font-scale / configure():
-const styles = useScaledStyles(() => ({
-  container: {
-    padding: rp(16),
-    marginTop: rm(20),
-  },
-  title: {
-    fontSize: rf(24),
-    fontFamily: fonts.inter.bold,
-  },
-  card: {
-    width: rw(90),
-    height: rh(25),
-    borderRadius: rr(12),
-  },
-}));
-```
+## Start in 3 steps
 
-## Install
+### 1. Install
 
 ```bash
 npm install react-native-pixelflow react-native-safe-area-context
-# or
-yarn add react-native-pixelflow react-native-safe-area-context
 # Expo:
 npx expo install react-native-safe-area-context
 ```
 
-Peer dependencies: `react >=17`, `react-native >=0.70`,
-`react-native-safe-area-context >=4`.  
-Optional: `expo-font` (if you load Google Fonts via Expo).
-
-Wrap your app root in `SafeAreaProvider` (required for `Container`):
+### 2. Wrap your app (order matters)
 
 ```tsx
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { PixelFlowProvider } from 'react-native-pixelflow';
+import { PixelFlowProvider, configure } from 'react-native-pixelflow';
+
+// Match your Figma frame once (optional but recommended)
+configure({ figma: 'iPhone 14' });
 
 export default function App() {
   return (
     <SafeAreaProvider>
       <PixelFlowProvider followSystem>
-        {/* screens */}
+        {/* your screens */}
       </PixelFlowProvider>
     </SafeAreaProvider>
   );
 }
 ```
 
-Works with Hermes, Fabric / the New Architecture, and Expo. No native code —
-pure JS/TS.
+### 3. Build a screen
 
-## Configure (recommended)
+**Option A — easiest (tokens + components):**
 
-Match your design frame once at app entry:
+```tsx
+import { Container, Box, FText, Button, Spacer } from 'react-native-pixelflow';
 
-```ts
-import { configure } from 'react-native-pixelflow';
-
-configure({
-  baseWidth: 390,       // default 375
-  baseHeight: 844,      // default 812
-  minFontScale: 0.85,   // clamp OS accessibility font scale
-  maxFontScale: 1.6,
-  applyAccessibilityFontScale: true, // rf/rl multiply by OS scale
-});
+export function HomeScreen() {
+  return (
+    <Container>
+      <Box p="md" bg="surface" radius="lg">
+        <FText variant="h2">Welcome</FText>
+        <FText color="fg.muted">Looks good on every phone size.</FText>
+        <Spacer size={16} />
+        <Button intent="primary" onPress={() => {}}>
+          Get started
+        </Button>
+      </Box>
+    </Container>
+  );
+}
 ```
 
-When `applyAccessibilityFontScale` is `true` (default), PixelFlow scales fonts
-and `FText` sets `allowFontScaling={false}` so React Native does **not** apply
-font scale twice. Pass `allowFontScaling` on `FText` to override, or set
-`applyAccessibilityFontScale: false` to leave accessibility entirely to RN.
+**Option B — paste Figma numbers into a StyleSheet:**
 
-## Why react-native-PixelFlow
+```tsx
+import { usePixelSheet, FText } from 'react-native-pixelflow';
 
-Most responsive-scaling libraries do one thing: width-based font/size
-scaling. react-native-PixelFlow runs a **hybrid scaling engine** that blends:
+export function Card() {
+  const styles = usePixelSheet(() => ({
+    box: { padding: 16, borderRadius: 12 },
+    title: { fontSize: 24, marginBottom: 8 },
+  }));
 
-- Screen width *and* height (rotation does not distort like width-only scaling)
-- Device classification — phone / tablet / foldable — with damping on larger screens
-- OS accessibility font scale, clamped to a configurable range
-- Pixel density, for crisp, whole-pixel output
+  return (
+    <>
+      <FText style={styles.title}>Title</FText>
+      {/* use styles.box on a View */}
+    </>
+  );
+}
+```
 
-### Example values (`rf(16)` / `rp(16)` / `rr(12)`, font scale 1, default config)
+That’s enough for most apps. Everything below is optional.
 
-| Device (logical) | Class | `rf(16)` | `rp(16)` | `rr(12)` |
-|---|---|---|---|---|
-| 375 × 812 | phone | ~16 | ~16 | ~12 |
-| 390 × 844 | phone | ~16–17 | ~16–17 | ~12 |
-| 674 × 841 | foldable | damped | damped | gentle |
-| 1024 × 1366 | tablet | damped | damped | gentle |
+---
 
-Exact pixels depend on density rounding; the important part is tablets/foldables
-grow slower than raw `width / 375`.
+## What should I use?
 
-## Live styles (important)
-
-`rp(16)` returns a **number for the current snapshot**. If you call it inside a
-module-level `StyleSheet.create(...)`, that number is frozen at import time and
-will **not** update on rotation.
-
-Prefer:
-
-| API | When to use |
+| I want to… | Use this |
 |---|---|
-| `useScaledStyles(() => ({ ... }))` | StyleSheets that must stay live |
-| `useTypography()` / `useThemeSpacing()` | Live type + spacing tokens |
-| Components (`Box`, `FText`, …) | Already subscribe to the engine |
-| Module-level `StyleSheet` + `rp`/`rf` | Static layouts that never rotate / resize |
+| Build a screen quickly | `Container`, `Box`, `FText`, `Button`, `Spacer` |
+| Paste Figma px into styles | `usePixelSheet(() => ({ … }))` |
+| Match my Figma frame | `configure({ figma: 'iPhone 14' })` |
+| Support iPad / large screens | `Grid`, `SplitView`, `ContentWidth`, `useWindowClass` |
+| See live scale values in the app | `{__DEV__ && <PixelFlowDebug />}` |
+| Coming from size-matters | `npx pixelflow migrate ./src` or `scale` / `ms` aliases |
 
-## Responsive functions
+---
 
-| Function | Purpose | Example |
-|---|---|---|
-| `rw(percent)` | % of screen width | `rw(90)` |
-| `rh(percent)` | % of screen height | `rh(30)` |
-| `rf(size)` | Responsive font size | `rf(16)` |
-| `rp(value)` | Responsive padding | `rp(16)` |
-| `rm(value)` | Responsive margin | `rm(20)` |
-| `rr(value)` | Responsive border radius | `rr(12)` |
-| `ri(value)` | Responsive icon size | `ri(24)` |
-| `rl(value)` | Responsive line height | `rl(24)` |
-| `rls(value)` | Responsive letter spacing | `rls(1.2)` |
-| `rs({ phone, tablet?, foldable? })` | Per-device value | `rs({ phone: 1, tablet: 2 })` |
+## Everyday building blocks
 
-All values are memoized and re-computed when the window dimensions, accessibility
-font scale, or `configure()` change (one shared `Dimensions` listener).
+### Box & text (design tokens)
 
-## Flex utilities
+```tsx
+<Box p="md" px={{ compact: 'sm', medium: 'lg' }} bg="bg.subtle" radius="lg">
+  <FText variant="h2" color="primary">Title</FText>
+  <FText color="fg.muted">Subtitle</FText>
+</Box>
+```
+
+**Spacing:** `xs` `sm` `md` `lg` `xl` `xxl`  
+**Radius:** `none` `sm` `md` `lg` `xl` `full`  
+**Colors:** `primary`, `surface`, `text`, … or semantic `bg.subtle`, `fg.muted`, `border.default`
+
+You can still pass raw numbers: `<Box p={16} />`.
+
+### PixelSheet (auto-scale by property)
+
+| Style key | Scales as |
+|---|---|
+| `fontSize` | font |
+| `padding` / `margin` / `gap` | spacing |
+| `borderRadius` | radius |
+| `%` / `flex` / `opacity` | unchanged |
+
+Prefer **`usePixelSheet`** inside components so styles update on rotation.
+
+Avoid module-level `StyleSheet.create({ padding: rp(16) })` — that freezes the number at import time.
+
+### Button
+
+```tsx
+<Button intent="primary" size="lg" fullWidth onPress={onSave}>
+  Save
+</Button>
+```
+
+`intent`: `primary` | `secondary` | `danger` | `ghost`  
+`size`: `sm` | `md` | `lg`
+
+---
+
+## Tablets & larger screens (when you need them)
+
+Scaling alone makes iPad UI “bigger phone.” For real tablet UX, **change layout**:
+
+```tsx
+import {
+  Grid,
+  SplitView,
+  ContentWidth,
+  useWindowClass,
+} from 'react-native-pixelflow';
+
+const { widthClass, columns, meets } = useWindowClass();
+// widthClass: compact → medium → expanded → large → extraLarge
+
+<ContentWidth>
+  <Grid minItemWidth={160} gap={12}>
+    {items.map((item) => (
+      <Card key={item.id} {...item} />
+    ))}
+  </Grid>
+</ContentWidth>
+
+<SplitView
+  breakpoint="medium"
+  master={<List />}
+  detail={<Detail />}
+/>
+```
+
+---
+
+## Try it fast
+
+- **Expo Snack:** copy [`example/SnackApp.tsx`](./example/SnackApp.tsx) — see [`example/README.md`](./example/README.md)
+- **In your app:** drop in [`example/ExampleScreen.tsx`](./example/ExampleScreen.tsx)
+
+---
+
+## Coming from `react-native-size-matters`?
+
+```bash
+npx pixelflow migrate ./src
+```
+
+Or keep familiar names:
 
 ```ts
-import { flex } from 'react-native-pixelflow';
+import { scale, moderateScale, s, ms } from 'react-native-pixelflow';
+```
 
-const styles = StyleSheet.create({
-  wrapper: { ...flex.center },
-  header: { ...flex.between },
+---
+
+## Advanced (optional)
+
+Only reach for these when the basics aren’t enough.
+
+<details>
+<summary><strong>Configure options</strong></summary>
+
+```ts
+configure({
+  figma: 'iPhone 14',           // or { width: 390, height: 844 }
+  density: 'comfortable',       // compact | comfortable | spacious
+  maxFontSizeMultiplier: 1.3,
+  applyAccessibilityFontScale: true,
 });
 ```
 
-Available: `center`, `row`, `column`, `between`, `around`, `evenly`, `start`,
-`end`, `wrap`, `fill` (fully typed for autocomplete).
+`listFigmaPresets()` shows all named frames (`iPhone 14`, `Pixel 7`, `iPad Pro 11`, …).
 
-## Typography
+</details>
 
-```ts
-import { typography, createTypography, useTypography } from 'react-native-pixelflow';
+<details>
+<summary><strong>Manual scale helpers</strong></summary>
 
-// In components (live):
-const type = useTypography();
-<Text style={type.h1}>Welcome</Text>
+| Function | Use for |
+|---|---|
+| `rp` / `rm` | padding / margin |
+| `rf` / `rl` / `rls` | font / line height / letter spacing |
+| `rr` / `ri` | radius / icon |
+| `rw` / `rh` | % of screen width / height |
+| `rsw` / `rsh` | % of **safe** width / height |
+| `rs({ phone, tablet })` | per-device value |
+| `design(16)` | same as `rp(16)` from Figma |
 
-// Or build a scale on a different default family:
-const jakarta = createTypography('plusJakartaSans');
+</details>
+
+<details>
+<summary><strong>Responsive props</strong></summary>
+
+```tsx
+<Box
+  p={{ compact: 'sm', medium: 'md', expanded: 'lg' }}
+  flexDirection={['column', 'row']}  // compact, medium, expanded
+/>
 ```
 
-Scale: `h1`, `h2`, `h3`, `subtitle`, `body`, `bodySmall`, `caption`, `button`.
+</details>
 
-## Fonts
+<details>
+<summary><strong>Variants, media, motion, a11y</strong></summary>
 
 ```ts
-import { fonts } from 'react-native-pixelflow';
+import { createVariants, useMedia, useMotion, useA11yLayout } from 'react-native-pixelflow';
 
-fontFamily: fonts.inter.regular
-fontFamily: fonts.poppins.semibold
-fontFamily: fonts.roboto.bold
+const chip = createVariants({
+  base: { padding: 8, borderRadius: 8 },
+  variants: {
+    tone: { neutral: { opacity: 1 }, danger: { opacity: 0.9 } },
+  },
+});
+
+const media = useMedia();
+if (media.lg || media.matches({ minWidth: 840 })) { /* wide layout */ }
+
+const motion = useMotion(); // durations become 0 if Reduce Motion is on
+const { preferStack } = useA11yLayout();
 ```
 
-Curated map of 21 Google Font families to font-family **strings** — binaries are
-not bundled. See the table in `src/fonts/fontRegistry.ts` for Expo package names.
+</details>
 
-**Loading fonts (Expo):**
+<details>
+<summary><strong>Theming</strong></summary>
+
+```tsx
+import { customTheme, PixelFlowProvider } from 'react-native-pixelflow';
+
+const brand = customTheme({
+  base: 'light',
+  colors: { primary: '#FF6B6B' },
+});
+
+<PixelFlowProvider theme={brand} density="comfortable">
+  <App />
+</PixelFlowProvider>
+```
+
+</details>
+
+<details>
+<summary><strong>Fonts</strong></summary>
+
+PixelFlow maps family names → strings (e.g. `fonts.inter.bold`).  
+It does **not** bundle font files.
 
 ```bash
 npx expo install expo-font @expo-google-fonts/inter
@@ -188,132 +292,54 @@ npx expo install expo-font @expo-google-fonts/inter
 
 ```tsx
 import { useFonts, Inter_400Regular, Inter_700Bold } from '@expo-google-fonts/inter';
-
-const [fontsLoaded] = useFonts({ Inter_400Regular, Inter_700Bold });
+const [loaded] = useFonts({ Inter_400Regular, Inter_700Bold });
 ```
 
-**Loading fonts (bare React Native):** download the `.ttf` files, add them under
-`assets/fonts`, register via `react-native.config.js`, run `npx react-native-asset`.
-Filenames must match registry strings, e.g. `Inter_700Bold.ttf`.
+See `src/fonts/fontRegistry.ts` for the full family list.
 
-`buildFontMap()` wires your own `require()`s into the shape `useFonts` expects
-and **warns** on unknown weight keys.
+</details>
 
-## Components
-
-```tsx
-import { Container, Box, Row, Column, Spacer, FText } from 'react-native-pixelflow';
-
-<Container>
-  <Row gap={12} justify="space-between">
-    <FText size={20} weight="bold">Title</FText>
-    <FText size={14} secondary>Subtitle</FText>
-  </Row>
-  <Spacer size={16} />
-  <Box p={16} radius={12} bg="#fff">
-    <Column gap={8}>
-      <FText>Card content</FText>
-    </Column>
-  </Box>
-</Container>
-```
-
-- **`Container`** — `SafeAreaView` from `react-native-safe-area-context`,
-  theme background, responsive padding (`safeArea={false}` for a plain `View`)
-- **`Box`** — `p`, `px`, `py`, `m`, `mx`, `my`, `radius`, `bg`, `flex`
-- **`Row`** / **`Column`** — flex layout with responsive `gap`
-- **`Spacer`** — `size` (responsive), optional `axis`
-- **`FText`** — `size`, `family`, `weight`, `lineHeight`, `themed`, `secondary`
-
-## Hooks
+<details>
+<summary><strong>Testing & ESLint</strong></summary>
 
 ```ts
-const { width, height, scale, isTablet, isFoldable, isLandscape, select } =
-  useResponsive();
+import { mockDimensions, resetPixelFlow } from 'react-native-pixelflow/testing';
 
-const columns = select({ phone: 1, tablet: 2, foldable: 2 });
-const { h1, body } = useTypography();
-const { deviceType, orientation, pixelDensity } = useDevice();
-const styles = useScaledStyles(() => ({ title: { fontSize: rf(24) } }));
-const spacing = useThemeSpacing(); // theme.spacing passed through rp()
-```
-
-`scale` matches the hybrid spacing curve used by `rp` / `rm` (not raw `width / 375`).
-
-## Theming
-
-```tsx
-import {
-  PixelFlowProvider,
-  lightTheme,
-  darkTheme,
-  customTheme,
-  useTheme,
-} from 'react-native-pixelflow';
-
-const brandTheme = customTheme({
-  base: 'dark',
-  colors: { primary: '#FF6B6B' },
-  spacing: { md: 20 },
+beforeEach(() => {
+  resetPixelFlow();
+  mockDimensions({ width: 390, height: 844 });
 });
-
-// Follow OS light/dark:
-<PixelFlowProvider followSystem>
-  <App />
-</PixelFlowProvider>
-
-// Or pin a theme:
-<PixelFlowProvider theme={brandTheme}>
-  <App />
-</PixelFlowProvider>
 ```
 
-`useTheme()` returns `colors`, `spacing`, `dark`, `name`.
+```js
+// ESLint — warn on raw padding/fontSize outside PixelSheet
+plugins: { pixelflow: require('react-native-pixelflow/eslint-plugin') },
+rules: { 'pixelflow/no-raw-spacing': 'warn' }
+```
 
-## TypeScript
+</details>
 
-Strict-mode TypeScript with a fully typed public API. `flex.*` and `fonts.*`
-preserve literal keys for editor autocomplete.
+<details>
+<summary><strong>Why PixelFlow? (short)</strong></summary>
+
+Most libs only do `width / 375` scaling. PixelFlow blends width + height, damps tablets/foldables, and can change **layout** (grid / split) — not only enlarge padding.
+
+Works with RN 0.70+, Hermes, Fabric, Expo. Pure JS/TS — no native modules.
+
+</details>
+
+---
 
 ## Compatibility
 
-React Native 0.70 through 0.86+, Hermes, Fabric / New Architecture, and Expo
-(managed or bare). No native modules.
-
-## Example
-
-See [`example/ExampleScreen.tsx`](./example/ExampleScreen.tsx) for a screen that
-wires `configure`, `useScaledStyles`, `rs` / `select`, and `followSystem` theming.
-Drop it into an Expo or RN app to try the API.
-
-## Project layout
-
-```
-src/
-  core/            scaling engine, config, device detection
-  responsive/       rw, rh, rf, rp, rm, rr, ri, rl, rls, rs
-  flex/             flex.* helpers
-  typography/       typography scale
-  fonts/            font family registry + loader helper
-  theme/            light/dark/custom themes + PixelFlowProvider
-  components/       Container, Box, Row, Column, Spacer, FText
-  hooks/            useResponsive, useTypography, useDevice, useScaledStyles
-  types/            shared TS types
-```
-
-## Building from source
-
-```bash
-npm install
-npm run typecheck
-npm test
-npm run build     # emits lib/commonjs, lib/module, lib/typescript via tsup
-```
+- React Native **0.70+**
+- Expo (managed or bare)
+- TypeScript (strict, full typings)
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+MIT — see [LICENSE](./LICENSE)
 
 ## Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md).
+[CHANGELOG.md](./CHANGELOG.md)
