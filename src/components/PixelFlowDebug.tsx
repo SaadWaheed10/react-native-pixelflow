@@ -3,6 +3,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import { getConfig } from '../core/config';
 import { useScalingSnapshot } from '../hooks/useScaling';
 import { useWindowClass } from '../adaptive/windowClass';
+import { useMultiWindow } from '../hooks/useMultiWindow';
+import { useFoldState } from '../hooks/useFoldState';
+import { useAdaptiveNav } from '../hooks/useAdaptiveNav';
 import { rf, rp } from '../responsive/responsive';
 import { getSafeInsets } from '../core/safeInsets';
 
@@ -14,7 +17,7 @@ export interface PixelFlowDebugProps {
 }
 
 /**
- * Floating inspector for window class, scale, density, and sample values.
+ * Floating inspector — window class, columns, multi-window, fold, density.
  * Renders only in `__DEV__` unless `force` is set.
  *
  * @example
@@ -27,21 +30,49 @@ export function PixelFlowDebug({
   const isDev =
     typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !== 'production';
   const snapshot = useScalingSnapshot();
-  const { widthClass, columns, nav } = useWindowClass();
+  const { widthClass, columns, nav, contentMaxWidth, horizontalPadding } =
+    useWindowClass();
+  const { isMultiWindow, forceCompact } = useMultiWindow();
+  const fold = useFoldState();
+  const adaptiveNav = useAdaptiveNav();
   const config = getConfig();
   const insets = getSafeInsets();
 
   const lines = useMemo(
     () => [
-      `class ${widthClass} · ${nav} · ${columns}col`,
+      `class ${widthClass} · ${columns}col · content≤${Math.round(contentMaxWidth)}`,
+      `nav ${nav}→${adaptiveNav.mode} · pad ${Math.round(horizontalPadding)}`,
       `${snapshot.deviceType} · ${snapshot.orientation}`,
       `${Math.round(snapshot.width)}×${Math.round(snapshot.height)} · dens ${config.density}`,
       `scale ${snapshot.scale.toFixed(2)} · font ${snapshot.fontScale.toFixed(2)}`,
       `rf16=${rf(16)} rp16=${rp(16)}`,
-      config.figmaPreset ? `figma ${config.figmaPreset}` : `base ${config.baseWidth}×${config.baseHeight}`,
+      isMultiWindow
+        ? `multi-window · forceCompact=${forceCompact ? 'yes' : 'no'}`
+        : 'window full-device',
+      fold.isNative
+        ? `fold native · ${fold.posture}${fold.preferTabletopSplit ? ' · tabletop' : ''}`
+        : fold.isLikelyFoldable
+          ? `fold heuristic · ${fold.posture}`
+          : 'fold none',
+      config.figmaPreset
+        ? `figma ${config.figmaPreset}`
+        : `base ${config.baseWidth}×${config.baseHeight}`,
       `safe t${Math.round(insets.top)} b${Math.round(insets.bottom)}`,
     ],
-    [widthClass, nav, columns, snapshot, config, insets],
+    [
+      widthClass,
+      columns,
+      contentMaxWidth,
+      horizontalPadding,
+      nav,
+      adaptiveNav.mode,
+      snapshot,
+      config,
+      insets,
+      isMultiWindow,
+      forceCompact,
+      fold,
+    ],
   );
 
   if (!force && !isDev) return null;
@@ -71,7 +102,7 @@ const styles = StyleSheet.create({
   badge: {
     position: 'absolute',
     zIndex: 9999,
-    maxWidth: 220,
+    maxWidth: 260,
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 10,

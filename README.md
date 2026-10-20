@@ -88,10 +88,19 @@ That’s enough for most apps. Everything below is optional.
 
 | I want to… | Use this |
 |---|---|
-| Build a screen quickly | `Container`, `Box`, `FText`, `Button`, `Spacer` |
+| Build a screen quickly | `Container`, `Box`, `FText`, `Button`, `Card`, `Spacer` |
+| Stack children with gap | `Stack` / `HStack` / `VStack` / `AdaptiveStack` |
+| Form / keyboard screen | `KeyboardScreen`, `FormField` |
 | Paste Figma px into styles | `usePixelSheet(() => ({ … }))` |
 | Match my Figma frame | `configure({ figma: 'iPhone 14' })` |
-| Support iPad / large screens | `Grid`, `SplitView`, `ContentWidth`, `useWindowClass` |
+| Support iPad / large screens | `Grid`, `SplitView`, `ContentWidth`, `useWindowClass`, `useListLayout` |
+| React to *parent* width | `useContainerSize` / `ContainerQuery` |
+| Hide/show by breakpoint | `Show` / `Hide` |
+| Fluid type that clamps | `fluid(14, 16, 22)` |
+| Readable article width | `useReadableWidth` / `maxCh` |
+| Tabs vs drawer nav | `useAdaptiveNav` |
+| Fold / split-screen | `useFoldState` / `useMultiWindow` |
+| Common screen patterns | `useRecipes()` |
 | See live scale values in the app | `{__DEV__ && <PixelFlowDebug />}` |
 | Coming from size-matters | `npx pixelflow migrate ./src` or `scale` / `ms` aliases |
 
@@ -137,6 +146,129 @@ Avoid module-level `StyleSheet.create({ padding: rp(16) })` — that freezes the
 
 `intent`: `primary` | `secondary` | `danger` | `ghost`  
 `size`: `sm` | `md` | `lg`
+
+### Stack, Card, AspectBox
+
+```tsx
+import {
+  AdaptiveStack,
+  AspectBox,
+  Card,
+  FText,
+  HStack,
+  Stack,
+  absoluteFill,
+} from 'react-native-pixelflow';
+
+<Stack gap="md">
+  <Card p="md" elevation="md">
+    <FText variant="h3">Profile</FText>
+  </Card>
+  <AdaptiveStack gap="sm" breakpoint="medium">
+    <AspectBox ratio="16:9">{/* Image with style={absoluteFill} */}</AspectBox>
+    <FText color="fg.muted">Caption</FText>
+  </AdaptiveStack>
+  <HStack gap="sm" justify="space-between">{/* … */}</HStack>
+</Stack>
+```
+
+### Keyboard + form fields
+
+```tsx
+import { FormField, KeyboardScreen, FText } from 'react-native-pixelflow';
+import { TextInput } from 'react-native';
+
+<KeyboardScreen>
+  <FormField label="Email" required helper="Work email" chrome error={errors.email}>
+    <TextInput value={email} onChangeText={setEmail} />
+  </FormField>
+</KeyboardScreen>
+```
+
+### Shadows, press styles, clamp
+
+```tsx
+import { clamp, createPressStyle, rf, shadow } from 'react-native-pixelflow';
+
+const card = [styles.box, shadow('md')];
+const fontSize = clamp(rf(18), 14, 22);
+
+<Pressable
+  disabled={busy}
+  style={createPressStyle(
+    {
+      base: { padding: 12, borderRadius: 8 },
+      pressed: { opacity: 0.85 },
+      disabled: { opacity: 0.4 },
+    },
+    busy,
+  )}
+/>
+```
+
+### Recipes, insets, lists
+
+```tsx
+import {
+  useInsetStyle,
+  useListLayout,
+  useRecipes,
+} from 'react-native-pixelflow';
+
+const r = useRecipes();
+const pad = useInsetStyle({ top: true, bottom: true, extra: 'md' });
+const list = useListLayout({ minItemWidth: 160, gap: 12 });
+
+<View style={[r.screenPadded, pad]}>
+  <FlatList {...list.flatListProps} data={data} renderItem={…} />
+</View>
+```
+
+### Container queries, Show/Hide, fluid type
+
+```tsx
+import {
+  ContainerQuery,
+  Hide,
+  OrientationGate,
+  Show,
+  fluid,
+  match,
+  maxCh,
+  rs,
+  useAdaptiveNav,
+  useImageSize,
+  useMultiWindow,
+  useReadableWidth,
+} from 'react-native-pixelflow';
+
+const columns = rs.match({ compact: 1, medium: 2, expanded: 3 });
+const titleSize = fluid(18, 22, 28);
+const { maxWidth } = useReadableWidth({ chars: 65 });
+const img = useImageSize({ base: 120, max: 200 });
+const nav = useAdaptiveNav();
+const { forceCompact } = useMultiWindow();
+
+<ContainerQuery>
+  {(box) => (box.meets('medium') ? <RowLayout /> : <ColumnLayout />)}
+</ContainerQuery>
+
+<Show above="medium"><TabletChrome /></Show>
+<Hide below="medium"><PhoneOnlyHint /></Hide>
+
+<OrientationGate allow="portrait">
+  <CheckoutForm />
+</OrientationGate>
+
+<View style={{ maxWidth: maxCh(65) }} />
+```
+
+Wire native fold posture when you have a hinge module:
+
+```ts
+import { setFoldState } from 'react-native-pixelflow';
+setFoldState({ isFolded: true, posture: 'tabletop' });
+```
 
 ---
 

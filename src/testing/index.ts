@@ -1,5 +1,6 @@
 import { DEFAULT_CONFIG, resetConfig, setConfig } from '../core/config';
 import { resetSafeInsets } from '../core/safeInsets';
+import { resetFoldState } from '../core/foldState';
 import { scalingEngine } from '../core/scalingEngine';
 
 export interface MockDimensionsOptions {
@@ -28,11 +29,12 @@ export function mockDimensions(options: MockDimensionsOptions = {}): void {
 }
 
 /**
- * Reset config, safe insets, and window back to defaults.
+ * Reset config, safe insets, fold state, and window back to defaults.
  */
 export function resetPixelFlow(): void {
   resetConfig();
   resetSafeInsets();
+  resetFoldState();
   setConfig({ ...DEFAULT_CONFIG });
   scalingEngine.configure({ ...DEFAULT_CONFIG });
   scalingEngine.setWindowForTesting(375, 812, 1);

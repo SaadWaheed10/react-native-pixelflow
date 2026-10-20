@@ -2,6 +2,36 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.5.0] — 2026-10-20
+
+### Added
+- **`useContainerSize` / `<ContainerQuery>`** — parent-size “container queries” with local window class
+- **`fluid(min, preferred, max)`** — CSS-style fluid type/spacing between viewport widths
+- **`useReadableWidth` / `maxCh`** — readable measure (chars-per-line) caps for body text
+- **`useOrientation` / `<OrientationGate>`** — orientation helpers + rotate fallback UI
+- **`<Show>` / `<Hide>`** — breakpoint / width / orientation visibility
+- **`useFoldState` / `setFoldState`** — fold posture (native bridge + heuristic fallback)
+- **`useAdaptiveNav`** — tabs / rail / drawer hints for React Navigation
+- **`useMultiWindow`** — detect compact windows on tablet/foldable (split-screen)
+- **`match()` / `rs.match` / `rs.class` / `rs.select`** — clearer responsive value pickers
+- **`useImageSize`** — clamped responsive avatar/thumbnail sizes
+- **`PixelFlowDebug`** — shows multi-window, fold posture, content max width, adaptive nav
+
+## [0.4.0] — 2026-10-20
+
+### Added
+- **`shadow()`** — cross-platform elevation (`sm` | `md` | `lg` | `xl` | number)
+- **`clamp()`** — clamp scaled values between min/max
+- **`createPressStyle()`** — Pressable style callback for pressed / hovered / focused / disabled
+- **`<Stack>` / `<HStack>` / `<VStack>` / `<AdaptiveStack>`** — tokenized gap stacks; AdaptiveStack flips at a window-class breakpoint
+- **`<AspectBox>`** — fixed aspect ratio (`"16:9"`, `1.5`, …)
+- **`<Card>`** — surface + tokens + shadow
+- **`<KeyboardScreen>`** — SafeArea + KeyboardAvoidingView + optional ScrollView shell
+- **`<FormField>`** — label / helper / error wrapper (optional chrome)
+- **`useInsetStyle()`** — safe-area padding/margin + tokenized extra
+- **`useListLayout()`** — FlatList helpers on top of `useGrid` (`numColumns`, `columnWrapperStyle`, remount `key`)
+- **`useRecipes()`** — themed style recipes (`screen`, `listRow`, `fab`, `chip`, …)
+
 ## [0.3.0] — 2026-10-19
 
 ### Added

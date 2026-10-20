@@ -11,12 +11,23 @@ export type { FigmaPresetName, FigmaFrame } from './core/figmaPresets';
 export { DENSITY_MULTIPLIERS, getDensityMultiplier } from './core/density';
 export type { Density } from './core/density';
 export { setSafeInsets, getSafeInsets } from './core/safeInsets';
+export {
+  setFoldState,
+  getFoldState,
+  resetFoldState,
+} from './core/foldState';
+export type { FoldState, FoldPosture } from './core/foldState';
 
 // Responsive functions
 export { rw, rh, rf, rp, rm, rr, ri, rl, rls, rs } from './responsive/responsive';
+export type { RsHelpers } from './responsive/responsive';
 export { design } from './responsive/design';
 export { rsw, rsh } from './responsive/safeMetrics';
 export { resolveResponsiveValue } from './responsive/resolveValue';
+export { clamp } from './responsive/clamp';
+export { fluid } from './responsive/fluid';
+export type { FluidOptions } from './responsive/fluid';
+export { match } from './responsive/match';
 export {
   scale,
   verticalScale,
@@ -30,9 +41,13 @@ export {
 
 // Layout helpers
 export { hairline, absoluteFill, layout } from './layout/helpers';
+export { shadow } from './layout/shadow';
+export type { ShadowLevel } from './layout/shadow';
 
 // PixelSheet
 export { PixelSheet, usePixelSheet, scaleStyles, scaleStyleValue } from './stylesheet/pixelSheet';
+export { createPressStyle } from './stylesheet/pressStyle';
+export type { PressStyleConfig } from './stylesheet/pressStyle';
 
 // Variants
 export { createVariants } from './variants/createVariants';
@@ -87,16 +102,32 @@ export { Box } from './components/Box';
 export type { BoxProps } from './components/Box';
 export { Row, Column, Spacer } from './components/Layout';
 export type { RowProps, ColumnProps, SpacerProps } from './components/Layout';
+export { Stack, HStack, VStack, AdaptiveStack } from './components/Stack';
+export type { StackProps, AdaptiveStackProps } from './components/Stack';
 export { FText } from './components/FText';
 export type { FTextProps, FTextVariant } from './components/FText';
 export { Button } from './components/Button';
 export type { ButtonProps, ButtonIntent, ButtonSize } from './components/Button';
+export { Card } from './components/Card';
+export type { CardProps } from './components/Card';
+export { AspectBox, parseAspectRatio } from './components/AspectBox';
+export type { AspectBoxProps, AspectRatioInput } from './components/AspectBox';
+export { FormField } from './components/FormField';
+export type { FormFieldProps } from './components/FormField';
+export { KeyboardScreen } from './components/KeyboardScreen';
+export type { KeyboardScreenProps } from './components/KeyboardScreen';
 export { Grid } from './components/Grid';
 export type { GridProps } from './components/Grid';
 export { ContentWidth } from './components/ContentWidth';
 export type { ContentWidthProps } from './components/ContentWidth';
 export { SplitView } from './components/SplitView';
 export type { SplitViewProps } from './components/SplitView';
+export { Show, Hide } from './components/Show';
+export type { VisibilityProps } from './components/Show';
+export { OrientationGate } from './components/OrientationGate';
+export type { OrientationGateProps } from './components/OrientationGate';
+export { ContainerQuery } from './components/ContainerQuery';
+export type { ContainerQueryProps } from './components/ContainerQuery';
 export { PixelFlowDebug } from './components/PixelFlowDebug';
 export type { PixelFlowDebugProps } from './components/PixelFlowDebug';
 
@@ -132,6 +163,38 @@ export { useMedia, matchMediaQuery } from './hooks/useMedia';
 export type { MediaQuery, UseMediaResult } from './hooks/useMedia';
 export { useMotion } from './hooks/useMotion';
 export type { UseMotionResult } from './hooks/useMotion';
+export { useInsetStyle } from './hooks/useInsetStyle';
+export type { UseInsetStyleOptions } from './hooks/useInsetStyle';
+export { useListLayout } from './hooks/useListLayout';
+export type {
+  UseListLayoutOptions,
+  UseListLayoutResult,
+} from './hooks/useListLayout';
+export { useRecipes } from './hooks/useRecipes';
+export type { Recipes } from './hooks/useRecipes';
+export { useContainerSize } from './hooks/useContainerSize';
+export type { UseContainerSizeResult } from './hooks/useContainerSize';
+export { useReadableWidth, maxCh } from './hooks/useReadableWidth';
+export type {
+  UseReadableWidthOptions,
+  UseReadableWidthResult,
+} from './hooks/useReadableWidth';
+export { useOrientation } from './hooks/useOrientation';
+export type { UseOrientationResult } from './hooks/useOrientation';
+export { useFoldState } from './hooks/useFoldState';
+export type { UseFoldStateResult } from './hooks/useFoldState';
+export { useMultiWindow } from './hooks/useMultiWindow';
+export type { UseMultiWindowResult } from './hooks/useMultiWindow';
+export { useAdaptiveNav } from './hooks/useAdaptiveNav';
+export type {
+  AdaptiveNavOptions,
+  UseAdaptiveNavResult,
+} from './hooks/useAdaptiveNav';
+export { useImageSize } from './hooks/useImageSize';
+export type {
+  UseImageSizeOptions,
+  UseImageSizeResult,
+} from './hooks/useImageSize';
 
 // Core (advanced usage / testing)
 export { scalingEngine } from './core/scalingEngine';

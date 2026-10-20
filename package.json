@@ -1,7 +1,7 @@
 {
   "name": "react-native-pixelflow",
-  "version": "0.3.0",
-  "description": "Professional React Native responsive design system — hybrid scaling, tokens, PixelSheet, variants, density, a11y layout, grids, and adaptive shells.",
+  "version": "0.4.0",
+  "description": "Professional React Native responsive design system — hybrid scaling, container queries, fluid type, adaptive nav, fold/multi-window awareness, and adaptive shells.",
   "main": "./lib/commonjs/index.js",
   "module": "./lib/module/index.js",
   "types": "./lib/typescript/index.d.ts",

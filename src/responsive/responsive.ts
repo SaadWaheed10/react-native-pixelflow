@@ -1,5 +1,16 @@
 import { scalingEngine } from '../core/scalingEngine';
-import type { DeviceType, ResponsiveByDevice } from '../types';
+import type {
+  DeviceType,
+  ResponsiveByDevice,
+  ResponsiveByWindow,
+  ResponsiveValue,
+  WindowWidthClass,
+} from '../types';
+import { resolveResponsiveValue } from './resolveValue';
+import {
+  getWindowWidthClass,
+  WINDOW_CLASS_ORDER,
+} from '../adaptive/windowClass';
 
 /**
  * Responsive width — returns `percent`% of the current screen width in px.
@@ -77,16 +88,80 @@ export function rls(value: number): number {
   return scalingEngine.letterSpacing(value);
 }
 
+export interface RsHelpers {
+  <T>(values: ResponsiveByDevice<T>): T;
+  /** Window / tuple / device map — same as `match()`. */
+  match: <T>(
+    value: ResponsiveValue<T>,
+    options?: {
+      width?: number;
+      widthClass?: WindowWidthClass;
+      deviceType?: DeviceType;
+    },
+  ) => T;
+  /** Device-class map (same as calling `rs`). */
+  select: <T>(
+    values: ResponsiveByDevice<T>,
+    deviceType?: DeviceType,
+  ) => T;
+  /** Window-class map only. */
+  class: <T>(
+    map: ResponsiveByWindow<T>,
+    widthClass?: WindowWidthClass,
+  ) => T;
+}
+
 /**
  * Pick a value by device class. Falls back: foldable → tablet → phone.
  *
+ * Also exposes:
+ * - `rs.match({ compact, medium, … })` / tuples / device maps
+ * - `rs.select({ phone, tablet })` (same as calling `rs`)
+ * - `rs.class({ compact, medium })` window-class only
+ *
  * @example
  * padding: rs({ phone: rp(16), tablet: rp(24), foldable: rp(20) })
- * columns: rs({ phone: 1, tablet: 2 })
+ * columns: rs.match({ compact: 1, medium: 2, expanded: 3 })
  */
-export function rs<T>(values: ResponsiveByDevice<T>): T {
-  return selectForDevice(scalingEngine.getSnapshot().deviceType, values);
-}
+export const rs: RsHelpers = Object.assign(
+  function rsFn<T>(values: ResponsiveByDevice<T>): T {
+    return selectForDevice(scalingEngine.getSnapshot().deviceType, values);
+  },
+  {
+    match: <T>(
+      value: ResponsiveValue<T>,
+      options?: {
+        width?: number;
+        widthClass?: WindowWidthClass;
+        deviceType?: DeviceType;
+      },
+    ): T => resolveResponsiveValue(value, options),
+    select: <T>(
+      values: ResponsiveByDevice<T>,
+      deviceType?: DeviceType,
+    ): T =>
+      selectForDevice(
+        deviceType ?? scalingEngine.getSnapshot().deviceType,
+        values,
+      ),
+    class: <T>(
+      map: ResponsiveByWindow<T>,
+      widthClass?: WindowWidthClass,
+    ): T => {
+      const snapshot = scalingEngine.getSnapshot();
+      const cls = widthClass ?? getWindowWidthClass(snapshot.width);
+      const idx = WINDOW_CLASS_ORDER.indexOf(cls);
+      for (let i = idx; i >= 0; i -= 1) {
+        const key = WINDOW_CLASS_ORDER[i];
+        const val = map[key];
+        if (val !== undefined) return val;
+      }
+      throw new Error(
+        `[react-native-pixelflow] rs.class map has no entry for "${cls}" or below.`,
+      );
+    },
+  },
+);
 
 /** Shared resolution used by `rs` and `useResponsive().select`. */
 export function selectForDevice<T>(
