@@ -1,6 +1,7 @@
 import { DEFAULT_CONFIG, resetConfig, setConfig } from '../core/config';
 import { resetSafeInsets } from '../core/safeInsets';
 import { resetFoldState } from '../core/foldState';
+import { clearHydrateLock } from '../core/hydrateLock';
 import { scalingEngine } from '../core/scalingEngine';
 
 export interface MockDimensionsOptions {
@@ -29,15 +30,28 @@ export function mockDimensions(options: MockDimensionsOptions = {}): void {
 }
 
 /**
- * Reset config, safe insets, fold state, and window back to defaults.
+ * Reset config, safe insets, fold state, hydrate lock, and window back to defaults.
  */
 export function resetPixelFlow(): void {
   resetConfig();
   resetSafeInsets();
   resetFoldState();
+  clearHydrateLock();
   setConfig({ ...DEFAULT_CONFIG });
   scalingEngine.configure({ ...DEFAULT_CONFIG });
   scalingEngine.setWindowForTesting(375, 812, 1);
 }
 
 export { scalingEngine };
+
+export {
+  LAYOUT_FIXTURES,
+  assertLayout,
+  captureLayoutSnapshot,
+  withFixtures,
+} from './layoutAssert';
+export type {
+  LayoutFixture,
+  LayoutSnapshot,
+  AssertLayoutOptions,
+} from './layoutAssert';

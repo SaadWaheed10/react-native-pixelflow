@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.6.0] — 2026-10-21
+
+### Added
+- **`styled()`** — token style factory (`styled(View, { p: 'md', bg: 'surface' })`)
+- **RTL spacing** — `ps`/`pe`/`ms`/`me` on Box/styled + `isRTL` / `rtlInsets` / `logicalHorizontal`
+- **`useA11yPrefs()`** — bold text, reduce motion, high contrast + `a11yTheme`
+- **`usePointer()`** — fine/coarse pointer + `canHover` (iPad / RN Web)
+- **Figma tokens CLI** — `npx pixelflow tokens ./figma-variables.json` + `themeFromFigma` / `emitThemeModule`
+- **`createNavigationTheme()`** — React Navigation theme from PixelFlow colors
+- **Worklet-safe scale** — `useScaleContext` + `rfWith` / `rpWith` / `rrWith` for Reanimated
+- **SSR hydrate lock** — `setHydrateLock` / `PixelFlowProvider ssrWidth` (Expo Router web)
+- **`useEstimatedItemSize()`** — FlashList/FlatList estimates tracking density + a11y
+- **`useOverlayInsets()`** — safe area + keyboard + fold hinge for portals/FABs
+- **Layout regression harness** — `assertLayout` / `LAYOUT_FIXTURES` in `/testing`
+- **`Shell.Phone` / `Shell.Tablet` / `Shell.Tabletop`** — adaptive app shells
+- **ESLint `pixelflow/no-frozen-rp`** — ban `rp()` inside `StyleSheet.create`
+
 ## [0.5.0] — 2026-10-20
 
 ### Added

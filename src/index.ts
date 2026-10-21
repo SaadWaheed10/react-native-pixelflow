@@ -17,6 +17,11 @@ export {
   resetFoldState,
 } from './core/foldState';
 export type { FoldState, FoldPosture } from './core/foldState';
+export {
+  setHydrateLock,
+  clearHydrateLock,
+  getHydrateLock,
+} from './core/hydrateLock';
 
 // Responsive functions
 export { rw, rh, rf, rp, rm, rr, ri, rl, rls, rs } from './responsive/responsive';
@@ -28,6 +33,22 @@ export { clamp } from './responsive/clamp';
 export { fluid } from './responsive/fluid';
 export type { FluidOptions } from './responsive/fluid';
 export { match } from './responsive/match';
+export {
+  isRTL,
+  logicalHorizontal,
+  rtlPair,
+  rtlInsets,
+} from './responsive/rtl';
+export {
+  createScaleContext,
+  rfWith,
+  rpWith,
+  rrWith,
+  riWith,
+  rlWith,
+  workletScale,
+} from './responsive/workletSafe';
+export type { ScaleContext } from './responsive/workletSafe';
 export {
   scale,
   verticalScale,
@@ -43,6 +64,10 @@ export {
 export { hairline, absoluteFill, layout } from './layout/helpers';
 export { shadow } from './layout/shadow';
 export type { ShadowLevel } from './layout/shadow';
+
+// Styled factory
+export { styled, resolveStyledStyle } from './styled/styled';
+export type { StyledProps } from './styled/styled';
 
 // PixelSheet
 export { PixelSheet, usePixelSheet, scaleStyles, scaleStyleValue } from './stylesheet/pixelSheet';
@@ -64,8 +89,24 @@ export type {
   ColorInput,
   RadiusInput,
 } from './tokens/resolveTokens';
+export {
+  parseFigmaVariables,
+  themeFromFigma,
+  emitThemeModule,
+} from './tokens/fromFigma';
+export type { FigmaVariablesInput } from './tokens/fromFigma';
 export { buildSemanticColors, resolveSemanticPath } from './theme/semantic';
 export { defaultMotion } from './theme/motion';
+
+// Navigation bridge
+export {
+  createNavigationTheme,
+  navigationThemes,
+} from './navigation/createNavigationTheme';
+export type {
+  NavigationTheme,
+  CreateNavigationThemeOptions,
+} from './navigation/createNavigationTheme';
 
 // Flex utilities
 export { flex } from './flex/flex';
@@ -128,6 +169,12 @@ export { OrientationGate } from './components/OrientationGate';
 export type { OrientationGateProps } from './components/OrientationGate';
 export { ContainerQuery } from './components/ContainerQuery';
 export type { ContainerQueryProps } from './components/ContainerQuery';
+export { Shell } from './components/Shell';
+export type {
+  ShellProps,
+  TabletShellProps,
+  TabletopShellProps,
+} from './components/Shell';
 export { PixelFlowDebug } from './components/PixelFlowDebug';
 export type { PixelFlowDebugProps } from './components/PixelFlowDebug';
 
@@ -195,6 +242,21 @@ export type {
   UseImageSizeOptions,
   UseImageSizeResult,
 } from './hooks/useImageSize';
+export { useA11yPrefs } from './hooks/useA11yPrefs';
+export type { UseA11yPrefsResult } from './hooks/useA11yPrefs';
+export { usePointer } from './hooks/usePointer';
+export type { UsePointerResult, PointerType } from './hooks/usePointer';
+export { useScaleContext } from './hooks/useScaleContext';
+export { useEstimatedItemSize, estimateItemSize } from './hooks/useEstimatedItemSize';
+export type {
+  UseEstimatedItemSizeOptions,
+  UseEstimatedItemSizeResult,
+} from './hooks/useEstimatedItemSize';
+export { useOverlayInsets } from './hooks/useOverlayInsets';
+export type {
+  UseOverlayInsetsOptions,
+  UseOverlayInsetsResult,
+} from './hooks/useOverlayInsets';
 
 // Core (advanced usage / testing)
 export { scalingEngine } from './core/scalingEngine';

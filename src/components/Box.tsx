@@ -22,6 +22,10 @@ export interface BoxProps extends ViewProps {
   pb?: SpacingInput;
   pl?: SpacingInput;
   pr?: SpacingInput;
+  /** Logical padding start (RTL-aware via `paddingStart`). */
+  ps?: SpacingInput;
+  /** Logical padding end (RTL-aware via `paddingEnd`). */
+  pe?: SpacingInput;
   /** Margin — number, spacing token, or responsive. */
   m?: SpacingInput;
   mx?: SpacingInput;
@@ -30,6 +34,9 @@ export interface BoxProps extends ViewProps {
   mb?: SpacingInput;
   ml?: SpacingInput;
   mr?: SpacingInput;
+  /** Logical margin start / end (RTL-aware). */
+  ms?: SpacingInput;
+  me?: SpacingInput;
   /** Gap (flex). */
   gap?: SpacingInput;
   /** Border radius — number, radius token (`"lg"`), or responsive. */
@@ -61,6 +68,8 @@ export function Box({
   pb,
   pl,
   pr,
+  ps,
+  pe,
   m,
   mx,
   my,
@@ -68,6 +77,8 @@ export function Box({
   mb,
   ml,
   mr,
+  ms,
+  me,
   gap,
   radius,
   bg,
@@ -94,6 +105,8 @@ export function Box({
       ...(pb !== undefined && { paddingBottom: resolveSpacing(pb, theme) }),
       ...(pl !== undefined && { paddingLeft: resolveSpacing(pl, theme) }),
       ...(pr !== undefined && { paddingRight: resolveSpacing(pr, theme) }),
+      ...(ps !== undefined && { paddingStart: resolveSpacing(ps, theme) }),
+      ...(pe !== undefined && { paddingEnd: resolveSpacing(pe, theme) }),
       ...(m !== undefined && { margin: resolveSpacing(m, theme) }),
       ...(mx !== undefined && { marginHorizontal: resolveSpacing(mx, theme) }),
       ...(my !== undefined && { marginVertical: resolveSpacing(my, theme) }),
@@ -101,6 +114,8 @@ export function Box({
       ...(mb !== undefined && { marginBottom: resolveSpacing(mb, theme) }),
       ...(ml !== undefined && { marginLeft: resolveSpacing(ml, theme) }),
       ...(mr !== undefined && { marginRight: resolveSpacing(mr, theme) }),
+      ...(ms !== undefined && { marginStart: resolveSpacing(ms, theme) }),
+      ...(me !== undefined && { marginEnd: resolveSpacing(me, theme) }),
       ...(gap !== undefined && { gap: resolveSpacing(gap, theme) }),
       ...(radius !== undefined && { borderRadius: resolveRadius(radius, theme) }),
       ...(bg !== undefined && { backgroundColor: resolveColor(bg, theme) }),
@@ -132,6 +147,8 @@ export function Box({
     pb,
     pl,
     pr,
+    ps,
+    pe,
     m,
     mx,
     my,
@@ -139,6 +156,8 @@ export function Box({
     mb,
     ml,
     mr,
+    ms,
+    me,
     gap,
     radius,
     bg,

@@ -123,15 +123,98 @@ const noRawSpacing = {
   },
 };
 
+/**
+ * Catch module-level StyleSheet.create({ padding: rp(16) }) which freezes
+ * values at import time — nudge toward usePixelSheet / useScaledStyles.
+ */
+const noFrozenRp = {
+  meta: {
+    type: 'suggestion',
+    docs: {
+      description:
+        'Disallow rp/rf/… calls inside StyleSheet.create (values freeze at import)',
+    },
+    schema: [],
+    messages: {
+      frozen:
+        'Do not call {{name}}() inside StyleSheet.create — use usePixelSheet() or useScaledStyles() so values update on rotate.',
+    },
+  },
+  create(context) {
+    const SCALE_FNS = new Set([
+      'rp',
+      'rm',
+      'rf',
+      'rl',
+      'rr',
+      'ri',
+      'rls',
+      'rw',
+      'rh',
+      'rsw',
+      'rsh',
+      'design',
+      'fluid',
+      'scale',
+      'moderateScale',
+      'ms',
+      's',
+      'vs',
+      'mvs',
+    ]);
+
+    function isStyleSheetCreate(node) {
+      return (
+        node &&
+        node.type === 'CallExpression' &&
+        node.callee.type === 'MemberExpression' &&
+        node.callee.object.type === 'Identifier' &&
+        node.callee.object.name === 'StyleSheet' &&
+        node.callee.property.type === 'Identifier' &&
+        node.callee.property.name === 'create'
+      );
+    }
+
+    return {
+      CallExpression(node) {
+        const ancestors = context.sourceCode
+          ? context.sourceCode.getAncestors(node)
+          : context.getAncestors();
+        if (!ancestors.some(isStyleSheetCreate)) return;
+
+        let name = null;
+        if (node.callee.type === 'Identifier') {
+          name = node.callee.name;
+        } else if (
+          node.callee.type === 'MemberExpression' &&
+          node.callee.object.type === 'Identifier' &&
+          node.callee.object.name === 'design'
+        ) {
+          name = 'design';
+        }
+        if (!name || !SCALE_FNS.has(name)) return;
+
+        context.report({
+          node,
+          messageId: 'frozen',
+          data: { name },
+        });
+      },
+    };
+  },
+};
+
 module.exports = {
   rules: {
     'no-raw-spacing': noRawSpacing,
+    'no-frozen-rp': noFrozenRp,
   },
   configs: {
     recommended: {
       plugins: ['pixelflow'],
       rules: {
         'pixelflow/no-raw-spacing': 'warn',
+        'pixelflow/no-frozen-rp': 'warn',
       },
     },
   },

@@ -8,6 +8,10 @@ import { rp, rr } from '../responsive/responsive';
 import { useScalingVersion } from '../hooks/useScaling';
 import { configure } from '../core/scalingEngine';
 import { setSafeInsets } from '../core/safeInsets';
+import {
+  clearHydrateLock,
+  setHydrateLock,
+} from '../core/hydrateLock';
 
 const ThemeContext = createContext<PixelFlowTheme>(lightTheme);
 
@@ -42,6 +46,14 @@ export interface PixelFlowProviderProps {
    * Spacing density for the whole tree. Syncs into `configure({ density })`.
    */
   density?: Density;
+  /**
+   * Freeze window width/height on first paint (SSR / Expo Router web), then
+   * unlock after mount to avoid scale flash. Pass design or typical phone size.
+   */
+  ssrWidth?: number;
+  ssrHeight?: number;
+  /** Auto-clear hydrate lock after ms. Default 0 (clear on mount effect). */
+  ssrLockMs?: number;
   children: ReactNode;
 }
 
@@ -62,6 +74,9 @@ export function PixelFlowProvider({
   light = lightTheme,
   dark = darkTheme,
   density,
+  ssrWidth,
+  ssrHeight = 812,
+  ssrLockMs = 0,
   children,
 }: PixelFlowProviderProps): React.JSX.Element {
   const scheme = useColorScheme();
@@ -71,6 +86,30 @@ export function PixelFlowProvider({
       configure({ density });
     }
   }, [density]);
+
+  useEffect(() => {
+    if (ssrWidth === undefined) return;
+    setHydrateLock({
+      width: ssrWidth,
+      height: ssrHeight,
+      ttlMs: ssrLockMs > 0 ? ssrLockMs : undefined,
+    });
+    if (ssrLockMs <= 0) {
+      // Unlock after first client paint
+      const clear =
+        typeof requestAnimationFrame === 'function'
+          ? () => {
+              const id = requestAnimationFrame(() => clearHydrateLock());
+              return () => cancelAnimationFrame(id);
+            }
+          : () => {
+              const id = setTimeout(() => clearHydrateLock(), 0);
+              return () => clearTimeout(id);
+            };
+      return clear();
+    }
+    return undefined;
+  }, [ssrWidth, ssrHeight, ssrLockMs]);
 
   const value = useMemo(() => {
     if (theme) return theme;

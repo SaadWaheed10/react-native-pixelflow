@@ -59,6 +59,13 @@ export interface PixelFlowConfig {
    * Default 1.35.
    */
   a11yStackThreshold?: number;
+  /**
+   * SSR / first-paint width lock (Expo Router web). Pair with
+   * `setHydrateLock` / `PixelFlowProvider ssrWidth`.
+   */
+  initialWidth?: number;
+  /** SSR / first-paint height lock. */
+  initialHeight?: number;
 }
 
 export interface ResolvedPixelFlowConfig {

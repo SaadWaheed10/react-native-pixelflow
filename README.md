@@ -101,6 +101,10 @@ That’s enough for most apps. Everything below is optional.
 | Tabs vs drawer nav | `useAdaptiveNav` |
 | Fold / split-screen | `useFoldState` / `useMultiWindow` |
 | Common screen patterns | `useRecipes()` |
+| Tokenized styled components | `styled(View, { p: 'md', bg: 'surface' })` |
+| App shells (phone/tablet/fold) | `Shell.Phone` / `Shell.Tablet` / `Shell.Tabletop` |
+| React Navigation colors | `createNavigationTheme({ theme })` |
+| Figma Variables → theme | `npx pixelflow tokens ./vars.json` |
 | See live scale values in the app | `{__DEV__ && <PixelFlowDebug />}` |
 | Coming from size-matters | `npx pixelflow migrate ./src` or `scale` / `ms` aliases |
 
@@ -268,6 +272,55 @@ Wire native fold posture when you have a hinge module:
 ```ts
 import { setFoldState } from 'react-native-pixelflow';
 setFoldState({ isFolded: true, posture: 'tabletop' });
+```
+
+### styled(), shells, navigation, Figma tokens
+
+```tsx
+import {
+  Shell,
+  createNavigationTheme,
+  styled,
+  useA11yPrefs,
+  useEstimatedItemSize,
+  useOverlayInsets,
+  usePointer,
+  useScaleContext,
+  rpWith,
+} from 'react-native-pixelflow';
+
+const Panel = styled.View({ p: 'md', bg: 'surface', radius: 'lg', ps: 'md' });
+
+<Shell.Tablet master={<List />} detail={<Detail />} />
+<Shell.Tabletop top={<Player />} bottom={<Controls />} />
+
+// NavigationContainer theme={createNavigationTheme({ theme })}
+// npx pixelflow tokens ./figma-variables.json -o src/theme/figmaTheme.ts
+
+const { estimatedItemSize } = useEstimatedItemSize({ base: 72 });
+const overlay = useOverlayInsets({ extra: 8 });
+const { canHover } = usePointer();
+const { a11yTheme } = useA11yPrefs();
+const ctx = useScaleContext(); // pass to Reanimated: rpWith(ctx, 16)
+```
+
+SSR / Expo Router web (avoid first-paint flash):
+
+```tsx
+<PixelFlowProvider ssrWidth={390} ssrHeight={844} followSystem>
+  <App />
+</PixelFlowProvider>
+```
+
+Layout regression tests:
+
+```ts
+import { assertLayout, resetPixelFlow } from 'react-native-pixelflow/testing';
+
+assertLayout({
+  fixture: 'phone',
+  expect: { widthClass: 'compact', rp16: 16 },
+});
 ```
 
 ---

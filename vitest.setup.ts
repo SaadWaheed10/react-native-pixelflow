@@ -52,14 +52,23 @@ vi.mock('react-native', () => {
       OS: 'ios',
       select: (spec: Record<string, unknown>) => spec.ios ?? spec.default,
     },
+    I18nManager: {
+      isRTL: false,
+      allowRTL: () => {},
+      forceRTL: () => {},
+    },
     StyleSheet: {
       create: <T,>(styles: T) => styles,
+      hairlineWidth: 1,
+      absoluteFill: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 },
     },
     View: 'View',
     Text: 'Text',
+    Pressable: 'Pressable',
     useColorScheme: () => 'light',
     AccessibilityInfo: {
       isReduceMotionEnabled: async () => false,
+      isBoldTextEnabled: async () => false,
       addEventListener: () => ({ remove: () => {} }),
     },
     Keyboard: {

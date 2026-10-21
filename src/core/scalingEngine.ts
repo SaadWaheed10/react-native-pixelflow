@@ -7,6 +7,7 @@ import {
   type ResolvedPixelFlowConfig,
 } from './config';
 import { getDensityMultiplier } from './density';
+import { applyHydrateLock, subscribeHydrateLock } from './hydrateLock';
 import type { DeviceType, Orientation, ScalingSnapshot } from '../types';
 
 type Listener = () => void;
@@ -25,19 +26,32 @@ class ScalingEngine {
 
   constructor() {
     const window = Dimensions.get('window');
-    this.width = window.width;
-    this.height = window.height;
+    const locked = applyHydrateLock(window.width, window.height);
+    this.width = locked.width;
+    this.height = locked.height;
     this.deviceType = getDeviceType(this.width, this.height);
     this.orientation = getOrientation(this.width, this.height);
     this.fontScale = PixelRatio.getFontScale();
     this.snapshot = this.buildSnapshot();
 
     Dimensions.addEventListener('change', ({ window: win }) => {
-      this.width = win.width;
-      this.height = win.height;
+      const locked = applyHydrateLock(win.width, win.height);
+      this.width = locked.width;
+      this.height = locked.height;
       this.deviceType = getDeviceType(this.width, this.height);
       this.orientation = getOrientation(this.width, this.height);
       this.fontScale = PixelRatio.getFontScale();
+      this.invalidate();
+    });
+
+    // Recompute when SSR hydrate lock is cleared
+    subscribeHydrateLock(() => {
+      const win = Dimensions.get('window');
+      const locked = applyHydrateLock(win.width, win.height);
+      this.width = locked.width;
+      this.height = locked.height;
+      this.deviceType = getDeviceType(this.width, this.height);
+      this.orientation = getOrientation(this.width, this.height);
       this.invalidate();
     });
   }

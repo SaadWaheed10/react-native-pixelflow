@@ -5,8 +5,7 @@
  * PixelFlow CLI
  *
  *   npx pixelflow migrate [path]
- *
- * Migrates common react-native-size-matters patterns toward PixelFlow.
+ *   npx pixelflow tokens <figma-variables.json> [-o theme.ts]
  */
 
 const fs = require('fs');
@@ -19,12 +18,18 @@ function printHelp() {
 react-native-pixelflow CLI
 
 Usage:
-  npx pixelflow migrate [dir]   Migrate size-matters imports/ScaledSheet → PixelFlow
+  npx pixelflow migrate [dir]              Migrate size-matters → PixelFlow
+  npx pixelflow tokens <file.json> [opts]  Figma Variables → theme TS module
   npx pixelflow help
 
+Tokens options:
+  -o, --out <file>     Output path (default: ./pixelflow-theme.ts)
+  --base light|dark    Base palette (default: light)
+  --name <name>        Theme name (default: figma)
+
 Examples:
-  npx pixelflow migrate .
   npx pixelflow migrate ./src
+  npx pixelflow tokens ./figma-variables.json -o src/theme/figmaTheme.ts
 `);
 }
 
@@ -63,11 +68,9 @@ function migrateSource(source) {
       out = out.replace(pattern, replacement);
       changed = true;
     }
-    // reset lastIndex for global regex reuse
     pattern.lastIndex = 0;
   }
 
-  // Convert '16@ms' / "12@s" style annotations to plain numbers (PixelSheet auto-scales).
   const annotated = out.replace(
     /(['"])(\d+(?:\.\d+)?)@(?:ms|mvs|vs|s)\d*(?:r)?\1/g,
     (_, _q, num) => num,
@@ -77,7 +80,6 @@ function migrateSource(source) {
     changed = true;
   }
 
-  // Ensure PixelSheet is imported when used after migration.
   if (
     changed &&
     /\bPixelSheet\b/.test(out) &&
@@ -125,13 +127,82 @@ function migrate(targetDir) {
   );
 }
 
-const [cmd, arg] = process.argv.slice(2);
+function parseArgs(argv) {
+  const positional = [];
+  const flags = {};
+  for (let i = 0; i < argv.length; i += 1) {
+    const a = argv[i];
+    if (a === '-o' || a === '--out') {
+      flags.out = argv[++i];
+    } else if (a === '--base') {
+      flags.base = argv[++i];
+    } else if (a === '--name') {
+      flags.name = argv[++i];
+    } else if (a.startsWith('-')) {
+      console.error(`Unknown flag: ${a}`);
+      process.exit(1);
+    } else {
+      positional.push(a);
+    }
+  }
+  return { positional, flags };
+}
+
+function tokensCommand(argv) {
+  const { positional, flags } = parseArgs(argv);
+  const inputPath = positional[0];
+  if (!inputPath) {
+    console.error('Usage: npx pixelflow tokens <figma-variables.json> [-o out.ts]');
+    process.exit(1);
+  }
+  const abs = path.resolve(process.cwd(), inputPath);
+  if (!fs.existsSync(abs)) {
+    console.error(`File not found: ${abs}`);
+    process.exit(1);
+  }
+
+  // Prefer compiled lib; fall back to a tiny inline emitter if build missing.
+  let emitThemeModule;
+  try {
+    const mod = require('../lib/commonjs/index.js');
+    emitThemeModule = mod.emitThemeModule;
+  } catch {
+    emitThemeModule = null;
+  }
+
+  const json = JSON.parse(fs.readFileSync(abs, 'utf8'));
+  let source;
+  if (typeof emitThemeModule === 'function') {
+    source = emitThemeModule(json, {
+      base: flags.base === 'dark' ? 'dark' : 'light',
+      name: flags.name || 'figma',
+    });
+  } else {
+    console.error(
+      'Build the package first (`npm run build`) so `emitThemeModule` is available.',
+    );
+    process.exit(1);
+  }
+
+  const outPath = path.resolve(
+    process.cwd(),
+    flags.out || './pixelflow-theme.ts',
+  );
+  fs.writeFileSync(outPath, source, 'utf8');
+  console.log(`Wrote ${path.relative(process.cwd(), outPath)}`);
+}
+
+const [cmd, ...rest] = process.argv.slice(2);
 if (!cmd || cmd === 'help' || cmd === '--help' || cmd === '-h') {
   printHelp();
   process.exit(0);
 }
 if (cmd === 'migrate') {
-  migrate(arg || '.');
+  migrate(rest[0] || '.');
+  process.exit(0);
+}
+if (cmd === 'tokens') {
+  tokensCommand(rest);
   process.exit(0);
 }
 
